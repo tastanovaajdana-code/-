@@ -3,14 +3,18 @@
 Платформа для проведения тестирования по ОРТ (11 класс, Кыргызстан). Подробное
 описание структуры и требований — в [`../docs/ORT-TEST-PLATFORM.md`](../docs/ORT-TEST-PLATFORM.md).
 
-Стек: Next.js (App Router, TypeScript) + Prisma ORM + SQLite (для разработки) + Tailwind CSS.
+Стек: Next.js (App Router, TypeScript) + Prisma ORM + PostgreSQL + Tailwind CSS.
+
+Инструкция по деплою на Vercel — в [`DEPLOY.md`](./DEPLOY.md).
 
 ## Запуск локально
 
+Нужна доступная база PostgreSQL (локальная или бесплатная у Neon/Supabase).
+
 ```bash
 npm install
-cp .env.example .env      # при необходимости отредактируйте DATABASE_URL и ADMIN_SESSION_SECRET
-npx prisma db push        # создаёт SQLite базу по схеме prisma/schema.prisma
+cp .env.example .env      # укажите свой DATABASE_URL (postgresql://...) и ADMIN_SESSION_SECRET
+npx prisma migrate deploy # создаёт таблицы по схеме prisma/schema.prisma
 npm run db:seed           # создаёт админа и пробный тест с 4 разделами
 npm run dev                # http://localhost:3000
 ```
