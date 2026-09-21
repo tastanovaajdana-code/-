@@ -61,7 +61,7 @@ export default function StartPage() {
                   type="text"
                   value={fio}
                   onChange={(e) => setFio(e.target.value)}
-                  placeholder="Иванов Иван Иванович"
+                  placeholder="Баатырбекова Айдана Баатырбековна"
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
                 />
               </div>
