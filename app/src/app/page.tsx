@@ -26,18 +26,20 @@ export default function StartPage() {
       <div className="w-full max-w-md animate-fade-in-up">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="relative">
-            <div className="absolute inset-0 -z-10 scale-125 rounded-2xl bg-emerald-400/30 blur-xl" />
-            <Image
-              src="/logo.jpg"
-              alt="Логотип"
-              width={64}
-              height={64}
-              className="rounded-2xl shadow-lg ring-1 ring-black/5"
-              priority
-            />
+            <div className="absolute inset-0 -z-10 scale-150 rounded-3xl bg-white/20 blur-2xl" />
+            <div className="rounded-3xl bg-white p-2.5 shadow-xl">
+              <Image
+                src="/logo.jpg"
+                alt="Логотип"
+                width={96}
+                height={96}
+                className="rounded-2xl"
+                priority
+              />
+            </div>
           </div>
-          <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white ring-1 ring-white/30 backdrop-blur">
+            <span className="h-1.5 w-1.5 rounded-full bg-white" />
             Онлайн-тестирование
           </span>
         </div>

@@ -51,18 +51,22 @@ export default function TestsPage() {
   }
 
   if (tests === null) {
-    return <main className="flex flex-1 items-center justify-center">Загрузка...</main>;
+    return <main className="flex flex-1 items-center justify-center text-white">Загрузка...</main>;
   }
 
   return (
     <main className="flex flex-1 flex-col items-center px-4 py-12">
       <div className="w-full max-w-2xl animate-fade-in-up">
-        <h1 className="text-2xl font-semibold text-slate-900">Выберите тест</h1>
-        <p className="mt-1 text-sm text-slate-500">Доступные тестирования для вашей группы</p>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        <h1 className="text-2xl font-semibold text-white">Выберите тест</h1>
+        <p className="mt-1 text-sm text-emerald-50/80">Доступные тестирования для вашей группы</p>
+        {error && (
+          <p className="mt-2 rounded-lg bg-white px-3 py-2 text-sm text-red-600 shadow-sm">{error}</p>
+        )}
 
         {tests.length === 0 && (
-          <p className="mt-6 text-slate-500">Нет доступных тестов. Обратитесь к администратору.</p>
+          <p className="mt-6 rounded-lg bg-white/10 px-3 py-2 text-emerald-50 ring-1 ring-white/20">
+            Нет доступных тестов. Обратитесь к администратору.
+          </p>
         )}
 
         <div className="mt-6 flex flex-col gap-4">

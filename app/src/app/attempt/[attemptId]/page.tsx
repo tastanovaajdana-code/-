@@ -75,10 +75,14 @@ export default function AttemptOverviewPage() {
   }, [params.attemptId]);
 
   if (error) {
-    return <main className="flex flex-1 items-center justify-center text-red-600">{error}</main>;
+    return (
+      <main className="flex flex-1 items-center justify-center">
+        <p className="rounded-lg bg-white px-4 py-3 text-red-600 shadow-sm">{error}</p>
+      </main>
+    );
   }
   if (!attempt) {
-    return <main className="flex flex-1 items-center justify-center">Загрузка...</main>;
+    return <main className="flex flex-1 items-center justify-center text-white">Загрузка...</main>;
   }
 
   const allDone = attempt.sections.every((s) => s.status === "done");
@@ -88,8 +92,8 @@ export default function AttemptOverviewPage() {
   return (
     <main className="flex flex-1 flex-col items-center px-4 py-12">
       <div className="w-full max-w-2xl animate-fade-in-up">
-        <h1 className="text-2xl font-semibold text-slate-900">{attempt.test.title}</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold text-white">{attempt.test.title}</h1>
+        <p className="mt-1 text-sm text-emerald-50/80">
           {attempt.studentFio} · Группа {attempt.group.name}
         </p>
 

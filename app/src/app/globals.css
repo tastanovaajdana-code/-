@@ -20,14 +20,16 @@
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  background-color: #059669;
   background-image:
-    radial-gradient(650px circle at 100% -5%, rgba(16, 185, 129, 0.10), transparent 60%),
-    radial-gradient(550px circle at -5% 100%, rgba(5, 150, 105, 0.08), transparent 60%);
+    radial-gradient(1100px circle at 12% -10%, rgba(255, 255, 255, 0.16), transparent 55%),
+    radial-gradient(900px circle at 105% 105%, rgba(0, 0, 0, 0.18), transparent 60%),
+    linear-gradient(135deg, #10b981 0%, #059669 45%, #047857 78%, #065f46 100%);
   background-attachment: fixed;
   background-repeat: no-repeat;
+  min-height: 100vh;
 }
 
 @keyframes fade-in-up {

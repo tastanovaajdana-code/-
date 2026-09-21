@@ -88,7 +88,7 @@ export default function SectionQuizPage() {
   }, [remainingSeconds, submit]);
 
   if (!data || !data.questions) {
-    return <main className="flex flex-1 items-center justify-center">Загрузка...</main>;
+    return <main className="flex flex-1 items-center justify-center text-white">Загрузка...</main>;
   }
 
   const isUrgent = remainingSeconds !== null && remainingSeconds <= 60;
@@ -131,7 +131,9 @@ export default function SectionQuizPage() {
           </div>
         </div>
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && (
+          <p className="mb-4 rounded-lg bg-white px-3 py-2 text-sm text-red-600 shadow-sm">{error}</p>
+        )}
 
         <div className="flex flex-col gap-4">
           {data.questions.map((question, index) => {

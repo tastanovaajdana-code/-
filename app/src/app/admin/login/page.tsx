@@ -35,7 +35,10 @@ export default function AdminLoginPage() {
     <main className="flex flex-1 items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm animate-fade-in-up">
         <div className="mb-6 flex flex-col items-center">
-          <Image src="/logo.jpg" alt="Логотип" width={56} height={56} className="rounded-2xl shadow-lg ring-1 ring-black/5" />
+          <div className="relative">
+            <div className="absolute inset-0 -z-10 scale-125 rounded-3xl bg-emerald-400/30 blur-2xl" />
+            <Image src="/logo.jpg" alt="Логотип" width={96} height={96} className="rounded-3xl shadow-lg ring-1 ring-black/5" />
+          </div>
         </div>
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
           <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600" />
