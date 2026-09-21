@@ -59,3 +59,7 @@ body {
 .animate-ring {
   animation: ring-pop 1s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
+
+.font-script {
+  font-family: var(--font-script), cursive;
+}

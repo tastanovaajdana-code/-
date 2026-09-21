@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { LogoMark } from "@/components/BrandScene";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -30,8 +30,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <Image src="/logo.jpg" alt="Логотип" width={30} height={30} className="rounded-lg shadow-sm" />
-              <span className="font-semibold text-slate-900">ОРТ · Админ</span>
+              <LogoMark size={30} />
+              <span className="font-semibold text-slate-900">ProManas · Админ</span>
             </div>
             <nav className="flex gap-1 text-sm">
               {links.map((link) => (

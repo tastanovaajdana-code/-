@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Marck_Script } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,8 +12,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const marckScript = Marck_Script({
+  variable: "--font-script",
+  weight: "400",
+  subsets: ["cyrillic", "latin"],
+});
+
 export const metadata: Metadata = {
-  title: "ОРТ Тестирование",
+  title: "ProManas — ОРТ Тестирование",
   description: "Платформа для проведения тестирования по ОРТ",
 };
 
@@ -21,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ru"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${marckScript.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col text-slate-900">
         {children}
