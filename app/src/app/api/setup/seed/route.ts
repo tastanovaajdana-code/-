@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     create: { login: adminLogin, passwordHash },
   });
 
-  const groupNames = ["11-А", "11-Б", "11-В"];
+  const groupNames = ["Прогресс", "Грант", "ЖРТ"];
   for (const name of groupNames) {
     await prisma.group.upsert({ where: { name }, update: {}, create: { name } });
   }

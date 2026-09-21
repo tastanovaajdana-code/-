@@ -4,6 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
+const GROUPS = ["Прогресс", "Грант", "ЖРТ"];
+
 export default function StartPage() {
   const router = useRouter();
   const [fio, setFio] = useState("");
@@ -66,13 +68,18 @@ export default function StartPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700">Группа</label>
-                <input
-                  type="text"
+                <select
                   value={group}
                   onChange={(e) => setGroup(e.target.value)}
-                  placeholder="11-А"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
-                />
+                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                >
+                  <option value="">Выберите группу</option>
+                  {GROUPS.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}
