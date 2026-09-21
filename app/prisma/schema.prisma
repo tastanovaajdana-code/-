@@ -64,6 +64,7 @@ model Question {
 model Attempt {
   id           String    @id @default(cuid())
   studentFio   String
+  studentEmail String?
   groupId      String
   group        Group     @relation(fields: [groupId], references: [id])
   testId       String
@@ -72,6 +73,8 @@ model Attempt {
   finishedAt   DateTime?
   totalScore   Float     @default(0)
   sectionResults AttemptSectionResult[]
+
+  @@unique([testId, studentEmail])
 }
 
 model AttemptSectionResult {

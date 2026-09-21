@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     return {
       id: attempt.id,
       studentFio: attempt.studentFio,
+      studentEmail: attempt.studentEmail,
       groupName: attempt.group.name,
       testTitle: attempt.test.title,
       startedAt: attempt.startedAt,

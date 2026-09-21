@@ -18,8 +18,9 @@ export default function TestsPage() {
 
   useEffect(() => {
     const fio = sessionStorage.getItem("ort_student_fio");
+    const email = sessionStorage.getItem("ort_student_email");
     const group = sessionStorage.getItem("ort_student_group");
-    if (!fio || !group) {
+    if (!fio || !email || !group) {
       router.replace("/");
       return;
     }
@@ -35,11 +36,12 @@ export default function TestsPage() {
     setError("");
     try {
       const fio = sessionStorage.getItem("ort_student_fio");
+      const email = sessionStorage.getItem("ort_student_email");
       const group = sessionStorage.getItem("ort_student_group");
       const res = await fetch("/api/attempts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fio, group, testId }),
+        body: JSON.stringify({ fio, email, group, testId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Ошибка");

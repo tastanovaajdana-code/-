@@ -9,16 +9,23 @@ const GROUPS = ["Прогресс", "Грант", "ЖРТ"];
 export default function StartPage() {
   const router = useRouter();
   const [fio, setFio] = useState("");
+  const [email, setEmail] = useState("");
   const [group, setGroup] = useState("");
   const [error, setError] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!fio.trim() || !group.trim()) {
-      setError("Заполните ФИО и группу");
+    const trimmedEmail = email.trim();
+    if (!fio.trim() || !trimmedEmail || !group.trim()) {
+      setError("Заполните ФИО, электронную почту и группу");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("Введите корректную электронную почту");
       return;
     }
     sessionStorage.setItem("ort_student_fio", fio.trim());
+    sessionStorage.setItem("ort_student_email", trimmedEmail.toLowerCase());
     sessionStorage.setItem("ort_student_group", group.trim());
     router.push("/tests");
   }
@@ -64,6 +71,35 @@ export default function StartPage() {
                   className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Электронная почта</label>
+              <div className="relative mt-1">
+                <svg
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="example@mail.com"
+                  className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+              <p className="mt-1 text-xs text-slate-400">
+                По этой почте отслеживается, что тест сдаётся только один раз
+              </p>
             </div>
 
             <div>

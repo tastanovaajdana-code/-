@@ -8,6 +8,7 @@ type Test = { id: string; title: string };
 type AttemptRow = {
   id: string;
   studentFio: string;
+  studentEmail: string | null;
   groupName: string;
   testTitle: string;
   startedAt: string;
@@ -175,6 +176,7 @@ export default function DashboardPage() {
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
               <th className="px-4 py-3 font-medium">ФИО</th>
+              <th className="px-4 py-3 font-medium">Почта</th>
               <th className="px-4 py-3 font-medium">Группа</th>
               <th className="px-4 py-3 font-medium">Тест</th>
               <th className="px-4 py-3 font-medium">Разделы</th>
@@ -186,6 +188,7 @@ export default function DashboardPage() {
             {attempts?.map((attempt) => (
               <tr key={attempt.id} className="transition hover:bg-emerald-50/40">
                 <td className="px-4 py-3 font-medium text-slate-900">{attempt.studentFio}</td>
+                <td className="px-4 py-3 text-slate-500">{attempt.studentEmail ?? "—"}</td>
                 <td className="px-4 py-3 text-slate-600">{attempt.groupName}</td>
                 <td className="px-4 py-3 text-slate-600">{attempt.testTitle}</td>
                 <td className="px-4 py-3 text-slate-600">
@@ -201,7 +204,7 @@ export default function DashboardPage() {
             ))}
             {attempts?.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
                   Нет данных
                 </td>
               </tr>

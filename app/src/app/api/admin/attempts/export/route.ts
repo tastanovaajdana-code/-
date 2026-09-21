@@ -31,6 +31,7 @@ export async function GET(request: Request) {
 
   const header = [
     "ФИО",
+    "Электронная почта",
     "Группа",
     "Тест",
     ...Array.from({ length: maxSections }, (_, i) => sectionTitles[i] ?? `Раздел ${i + 1}`),
@@ -43,6 +44,7 @@ export async function GET(request: Request) {
     const sectionScores = attempt.test.sections.map((s) => resultsBySection.get(s.id)?.score ?? 0);
     return [
       attempt.studentFio,
+      attempt.studentEmail ?? "",
       attempt.group.name,
       attempt.test.title,
       ...sectionScores.map(String),
