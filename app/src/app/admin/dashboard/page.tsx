@@ -97,9 +97,23 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Статистика прохождений</h1>
+    <div className="animate-fade-in-up">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-600 text-white shadow-sm">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14"
+              />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">Статистика прохождений</h1>
+            <p className="text-sm text-slate-500">Результаты учеников по всем тестам и группам</p>
+          </div>
+        </div>
         <a
           href={exportHref}
           className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
@@ -128,11 +142,11 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="mt-6 flex gap-3">
+      <div className="mt-6 flex flex-wrap gap-3">
         <select
           value={groupId}
           onChange={(e) => setGroupId(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
         >
           <option value="">Все группы</option>
           {groups.map((g) => (
@@ -145,7 +159,7 @@ export default function DashboardPage() {
         <select
           value={testId}
           onChange={(e) => setTestId(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
         >
           <option value="">Все тесты</option>
           {tests.map((t) => (

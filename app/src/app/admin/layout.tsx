@@ -24,12 +24,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="flex flex-1 flex-col bg-slate-50">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">
+    <div className="flex min-h-screen flex-1 flex-col bg-gradient-to-b from-emerald-50 via-slate-50 to-slate-50">
+      <header className="sticky top-0 z-20 overflow-hidden border-b border-slate-200 bg-white/80 backdrop-blur">
+        <div className="h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600" />
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <Image src="/logo.jpg" alt="Логотип" width={28} height={28} className="rounded-md shadow-sm" />
+              <Image src="/logo.jpg" alt="Логотип" width={30} height={30} className="rounded-lg shadow-sm" />
               <span className="font-semibold text-slate-900">ОРТ · Админ</span>
             </div>
             <nav className="flex gap-1 text-sm">
