@@ -44,19 +44,91 @@ export default function DashboardPage() {
     return `/api/admin/attempts/export?${query.toString()}`;
   })();
 
+  const totalAttempts = attempts?.length ?? 0;
+  const finishedAttempts = attempts?.filter((a) => a.finishedAt).length ?? 0;
+  const avgScore =
+    finishedAttempts > 0
+      ? Math.round(
+          (attempts!.filter((a) => a.finishedAt).reduce((sum, a) => sum + a.totalScore, 0) /
+            finishedAttempts) *
+            10
+        ) / 10
+      : 0;
+
+  const stats = [
+    {
+      label: "Всего попыток",
+      value: totalAttempts,
+      color: "bg-emerald-100 text-emerald-700",
+      icon: (
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-5.13a4 4 0 11-8 0 4 4 0 018 0zm8 0a4 4 0 11-8 0 4 4 0 018 0z" />
+      ),
+    },
+    {
+      label: "Завершено",
+      value: finishedAttempts,
+      color: "bg-sky-100 text-sky-700",
+      icon: <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />,
+    },
+    {
+      label: "Средний балл",
+      value: avgScore,
+      color: "bg-amber-100 text-amber-700",
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+        />
+      ),
+    },
+    {
+      label: "Групп",
+      value: groups.length,
+      color: "bg-violet-100 text-violet-700",
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M12 11a4 4 0 100-8 4 4 0 000 8z"
+        />
+      ),
+    },
+  ];
+
   return (
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900">Статистика прохождений</h1>
         <a
           href={exportHref}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+          className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
         >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
+          </svg>
           Экспорт в CSV
         </a>
       </div>
 
-      <div className="mt-4 flex gap-3">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md"
+          >
+            <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.color}`}>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                {stat.icon}
+              </svg>
+            </div>
+            <p className="mt-3 text-2xl font-semibold text-slate-900">{stat.value}</p>
+            <p className="text-xs text-slate-500">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 flex gap-3">
         <select
           value={groupId}
           onChange={(e) => setGroupId(e.target.value)}
@@ -98,7 +170,7 @@ export default function DashboardPage() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {attempts?.map((attempt) => (
-              <tr key={attempt.id}>
+              <tr key={attempt.id} className="transition hover:bg-emerald-50/40">
                 <td className="px-4 py-3 font-medium text-slate-900">{attempt.studentFio}</td>
                 <td className="px-4 py-3 text-slate-600">{attempt.groupName}</td>
                 <td className="px-4 py-3 text-slate-600">{attempt.testTitle}</td>
