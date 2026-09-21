@@ -14,6 +14,7 @@ type Question = {
   correctAnswer: string;
   points: number;
   order: number;
+  imageUrl: string | null;
 };
 
 type Section = {
@@ -42,7 +43,42 @@ const emptyQuestionForm = {
   optionD: "",
   correctAnswer: "",
   points: "1",
+  imageUrl: "",
 };
+
+const MAX_IMAGE_DIMENSION = 1200;
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+function resizeImageToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Не удалось прочитать файл"));
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onerror = () => reject(new Error("Не удалось загрузить изображение"));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+          const scale = MAX_IMAGE_DIMENSION / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Canvas не поддерживается"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 const typeBadge: Record<string, string> = {
   single: "bg-sky-100 text-sky-700",
@@ -63,6 +99,7 @@ export default function AdminTestDetailPage() {
   const [questionForms, setQuestionForms] = useState<Record<string, typeof emptyQuestionForm>>({});
   const [importResult, setImportResult] = useState<{ createdCount: number; errors: string[] } | null>(null);
   const [importing, setImporting] = useState(false);
+  const [imageError, setImageError] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -108,6 +145,21 @@ export default function AdminTestDetailPage() {
     return questionForms[sectionId] ?? emptyQuestionForm;
   }
 
+  async function handleQuestionImage(sectionId: string, file: File | undefined) {
+    if (!file) return;
+    setImageError((prev) => ({ ...prev, [sectionId]: "" }));
+    if (file.size > MAX_IMAGE_BYTES) {
+      setImageError((prev) => ({ ...prev, [sectionId]: "Файл слишком большой (макс. 2 МБ)" }));
+      return;
+    }
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      setQuestionForms((prev) => ({ ...prev, [sectionId]: { ...getForm(sectionId), imageUrl: dataUrl } }));
+    } catch {
+      setImageError((prev) => ({ ...prev, [sectionId]: "Не удалось обработать изображение" }));
+    }
+  }
+
   async function addQuestion(sectionId: string) {
     const form = getForm(sectionId);
     if (!form.text.trim() || !form.correctAnswer.trim()) return;
@@ -123,6 +175,7 @@ export default function AdminTestDetailPage() {
         optionD: form.optionD || null,
         correctAnswer: form.correctAnswer.trim(),
         points: Number(form.points) || 1,
+        imageUrl: form.imageUrl || null,
       }),
     });
     setQuestionForms((prev) => ({ ...prev, [sectionId]: emptyQuestionForm }));
@@ -314,6 +367,25 @@ export default function AdminTestDetailPage() {
                 </span>
               </div>
 
+              {(() => {
+                const sumPoints = section.questions.reduce((sum, q) => sum + q.points, 0);
+                return (
+                  <p className="mt-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-700">
+                    Сумма баллов вопросов: <span className="font-semibold">{sumPoints}</span>
+                    {section.maxScore != null ? (
+                      <>
+                        {" "}
+                        → пересчитывается пропорционально в макс.{" "}
+                        <span className="font-semibold">{section.maxScore}</span> балл(ов) раздела
+                        {sumPoints === 0 && " (добавьте вопросы, чтобы расчёт заработал)"}
+                      </>
+                    ) : (
+                      <> — балл раздела равен этой сумме (макс. балл не задан)</>
+                    )}
+                  </p>
+                );
+              })()}
+
               <div className="mt-4 flex flex-col gap-2">
                 {section.questions.map((question, index) => (
                   <div
@@ -332,6 +404,13 @@ export default function AdminTestDetailPage() {
                         <span>· Балл: {question.points}</span>
                       </div>
                     </div>
+                    {question.imageUrl && (
+                      <img
+                        src={question.imageUrl}
+                        alt=""
+                        className="h-12 w-12 flex-none rounded-lg object-cover ring-1 ring-slate-200"
+                      />
+                    )}
                     <button
                       onClick={() => removeQuestion(question.id)}
                       className="flex-none rounded-lg p-1 text-slate-300 opacity-0 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
@@ -419,6 +498,41 @@ export default function AdminTestDetailPage() {
                     }
                     className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
                   />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:border-emerald-400 hover:text-emerald-600">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Фото к вопросу
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleQuestionImage(section.id, e.target.files?.[0])}
+                      />
+                    </label>
+                    {getForm(section.id).imageUrl && (
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={getForm(section.id).imageUrl}
+                          alt=""
+                          className="h-14 w-14 rounded-lg object-cover ring-1 ring-slate-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setQuestionForms((prev) => ({ ...prev, [section.id]: { ...getForm(section.id), imageUrl: "" } }))
+                          }
+                          className="text-xs text-red-600 hover:underline"
+                        >
+                          Убрать фото
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {imageError[section.id] && (
+                    <p className="text-xs text-red-600">{imageError[section.id]}</p>
+                  )}
                   <button
                     onClick={() => addQuestion(section.id)}
                     className="self-start rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-700"

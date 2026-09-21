@@ -12,6 +12,49 @@ function htmlResponse(body: string, status = 200) {
   );
 }
 
+type SectionSeed = { title: string; timeLimitMinutes: number; maxScore: number };
+type QuestionSeed = { text: string; optionA: string; optionB: string; optionC: string; optionD: string; correct: string };
+
+async function createTestIfMissing(
+  title: string,
+  description: string,
+  sectionsData: SectionSeed[],
+  questionBank: Record<string, QuestionSeed[]>
+) {
+  const existingTest = await prisma.test.findFirst({ where: { title } });
+  if (existingTest) return;
+
+  const test = await prisma.test.create({
+    data: { title, description, isActive: true },
+  });
+
+  for (let i = 0; i < sectionsData.length; i++) {
+    const s = sectionsData[i];
+    const section = await prisma.section.create({
+      data: { testId: test.id, title: s.title, order: i, timeLimitMinutes: s.timeLimitMinutes, maxScore: s.maxScore },
+    });
+
+    const questions = questionBank[s.title] ?? [];
+    for (let j = 0; j < questions.length; j++) {
+      const q = questions[j];
+      await prisma.question.create({
+        data: {
+          sectionId: section.id,
+          text: q.text,
+          type: "single",
+          optionA: q.optionA,
+          optionB: q.optionB,
+          optionC: q.optionC,
+          optionD: q.optionD,
+          correctAnswer: q.correct,
+          points: 1,
+          order: j,
+        },
+      });
+    }
+  }
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const key = url.searchParams.get("key");
@@ -42,29 +85,18 @@ export async function GET(request: Request) {
     await prisma.group.upsert({ where: { name }, update: {}, create: { name } });
   }
 
-  const testTitle = "ОРТ — пробный тест №1";
-  const existingTest = await prisma.test.findFirst({ where: { title: testTitle } });
+  const sectionsData: SectionSeed[] = [
+    { title: "Аналогии", timeLimitMinutes: 20, maxScore: 25 },
+    { title: "Математика", timeLimitMinutes: 30, maxScore: 25 },
+    { title: "Чтение и понимание текста", timeLimitMinutes: 25, maxScore: 25 },
+    { title: "Грамотность письма", timeLimitMinutes: 20, maxScore: 25 },
+  ];
 
-  if (!existingTest) {
-    const test = await prisma.test.create({
-      data: {
-        title: testTitle,
-        description: "Тренировочное тестирование по 4 разделам ОРТ",
-        isActive: true,
-      },
-    });
-
-    const sectionsData = [
-      { title: "Аналогии", timeLimitMinutes: 20, maxScore: 25 },
-      { title: "Математика", timeLimitMinutes: 30, maxScore: 25 },
-      { title: "Чтение и понимание текста", timeLimitMinutes: 25, maxScore: 25 },
-      { title: "Грамотность письма", timeLimitMinutes: 20, maxScore: 25 },
-    ];
-
-    const questionBank: Record<
-      string,
-      { text: string; optionA: string; optionB: string; optionC: string; optionD: string; correct: string }[]
-    > = {
+  await createTestIfMissing(
+    "ОРТ — пробный тест №1",
+    "Тренировочное тестирование по 4 разделам ОРТ",
+    sectionsData,
+    {
       Аналогии: [
         { text: "Птица : Гнездо = Человек : ?", optionA: "Машина", optionB: "Дом", optionC: "Дерево", optionD: "Улица", correct: "option_b" },
         { text: "Учитель : Школа = Врач : ?", optionA: "Больница", optionB: "Магазин", optionC: "Театр", optionD: "Стадион", correct: "option_a" },
@@ -83,38 +115,38 @@ export async function GET(request: Request) {
         { text: "Укажите правильное написание", optionA: "не смотря на", optionB: "несмотря на", optionC: "не-смотря на", optionD: "нес мотря на", correct: "option_b" },
         { text: 'В каком слове пропущена буква "о": пр...грамма', optionA: "а", optionB: "о", optionC: "е", optionD: "и", correct: "option_b" },
       ],
-    };
-
-    for (let i = 0; i < sectionsData.length; i++) {
-      const s = sectionsData[i];
-      const section = await prisma.section.create({
-        data: { testId: test.id, title: s.title, order: i, timeLimitMinutes: s.timeLimitMinutes, maxScore: s.maxScore },
-      });
-
-      const questions = questionBank[s.title] ?? [];
-      for (let j = 0; j < questions.length; j++) {
-        const q = questions[j];
-        await prisma.question.create({
-          data: {
-            sectionId: section.id,
-            text: q.text,
-            type: "single",
-            optionA: q.optionA,
-            optionB: q.optionB,
-            optionC: q.optionC,
-            optionD: q.optionD,
-            correctAnswer: q.correct,
-            points: 1,
-            order: j,
-          },
-        });
-      }
     }
-  }
+  );
+
+  await createTestIfMissing(
+    "ОРТ — пробный тест №2",
+    "Второе тренировочное тестирование по 4 разделам ОРТ",
+    sectionsData,
+    {
+      Аналогии: [
+        { text: "Рыба : Вода = Птица : ?", optionA: "Гнездо", optionB: "Воздух", optionC: "Дерево", optionD: "Земля", correct: "option_b" },
+        { text: "Книга : Читатель = Фильм : ?", optionA: "Режиссёр", optionB: "Актёр", optionC: "Зритель", optionD: "Сценарий", correct: "option_c" },
+        { text: "Огонь : Тепло = Лёд : ?", optionA: "Холод", optionB: "Вода", optionC: "Снег", optionD: "Пар", correct: "option_a" },
+      ],
+      Математика: [
+        { text: "Чему равно 15 × 6?", optionA: "80", optionB: "90", optionC: "85", optionD: "95", correct: "option_b" },
+        { text: "Найдите значение x: 4x − 7 = 21", optionA: "6", optionB: "7", optionC: "8", optionD: "9", correct: "option_b" },
+        { text: "Периметр прямоугольника со сторонами 5 и 8 см равен", optionA: "26 см", optionB: "40 см", optionC: "13 см", optionD: "30 см", correct: "option_a" },
+      ],
+      "Чтение и понимание текста": [
+        { text: "Абзац — это", optionA: "отдельное слово", optionB: "часть текста с единой мыслью", optionC: "заголовок текста", optionD: "знак пунктуации", correct: "option_b" },
+        { text: 'Антоним слова "светлый"', optionA: "яркий", optionB: "тёмный", optionC: "прозрачный", optionD: "цветной", correct: "option_b" },
+      ],
+      "Грамотность письма": [
+        { text: "Укажите правильное написание", optionA: "чтобы", optionB: "что бы", optionC: "что-бы", optionD: "чтоб ы", correct: "option_a" },
+        { text: 'В каком слове пропущена буква "и": д...ректор', optionA: "е", optionB: "и", optionC: "я", optionD: "а", correct: "option_b" },
+      ],
+    }
+  );
 
   return htmlResponse(`
     <h1 class="ok">Готово!</h1>
-    <p>Администратор и пробный тест созданы (или уже существовали).</p>
+    <p>Администратор и пробные тесты созданы (или уже существовали).</p>
     <p>Логин администратора: <code>${adminLogin}</code></p>
     <p>Пароль администратора: <code>${adminPassword}</code></p>
     <p>Теперь можно зайти на <code>/admin/login</code>, а ученики могут заходить на <code>/</code>.</p>

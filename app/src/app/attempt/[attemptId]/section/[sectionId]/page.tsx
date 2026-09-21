@@ -11,6 +11,7 @@ type Question = {
   optionB: string | null;
   optionC: string | null;
   optionD: string | null;
+  imageUrl: string | null;
 };
 
 type SectionData = {
@@ -153,6 +154,14 @@ export default function SectionQuizPage() {
                   </span>
                   <p className="font-medium text-slate-900">{question.text}</p>
                 </div>
+
+                {question.imageUrl && (
+                  <img
+                    src={question.imageUrl}
+                    alt=""
+                    className="mt-3 max-h-80 w-full rounded-lg object-contain ring-1 ring-slate-200"
+                  />
+                )}
 
                 {question.type === "text" ? (
                   <input

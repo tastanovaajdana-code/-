@@ -10,6 +10,7 @@ export type ImportedQuestionRow = {
   option_d?: string;
   correct_answer: string;
   points?: number;
+  image_url?: string;
 };
 
 export type ParsedImportResult = {
@@ -50,6 +51,7 @@ function coerceRow(raw: Record<string, unknown>, index: number, errors: string[]
     option_d: get("option_d") || undefined,
     correct_answer: get("correct_answer"),
     points: Number.isFinite(points) && points > 0 ? points : 1,
+    image_url: get("image_url") || undefined,
   };
 }
 

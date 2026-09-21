@@ -70,6 +70,7 @@ export async function POST(
         correctAnswer: row.correct_answer,
         points: row.points ?? 1,
         order,
+        imageUrl: row.image_url || null,
       },
     });
     createdCount += 1;

@@ -57,6 +57,7 @@ model Question {
   correctAnswer String   // "option_b" | "option_a,option_c" | free text
   points        Float    @default(1)
   order         Int      @default(0)
+  imageUrl      String?  @db.Text
   answers       Answer[]
 }
 
