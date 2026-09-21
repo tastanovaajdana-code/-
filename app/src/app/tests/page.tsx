@@ -70,7 +70,7 @@ export default function TestsPage() {
               key={test.id}
               onClick={() => startTest(test.id)}
               disabled={starting !== null}
-              className="rounded-xl bg-white p-5 text-left shadow-sm ring-1 ring-slate-200 transition hover:ring-indigo-400 disabled:opacity-60"
+              className="rounded-xl bg-white p-5 text-left shadow-sm ring-1 ring-slate-200 transition hover:ring-emerald-400 disabled:opacity-60"
             >
               <h2 className="text-lg font-medium text-slate-900">{test.title}</h2>
               {test.description && (
@@ -78,7 +78,7 @@ export default function TestsPage() {
               )}
               <p className="mt-2 text-xs text-slate-400">{test.sectionsCount} раздел(ов)</p>
               {starting === test.id && (
-                <p className="mt-2 text-xs text-indigo-600">Начинаем тестирование...</p>
+                <p className="mt-2 text-xs text-emerald-600">Начинаем тестирование...</p>
               )}
             </button>
           ))}

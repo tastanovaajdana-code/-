@@ -51,7 +51,7 @@ export default function GroupsPage() {
           placeholder="Название группы (например 11-А)"
           className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
         />
-        <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        <button className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
           Добавить
         </button>
       </form>

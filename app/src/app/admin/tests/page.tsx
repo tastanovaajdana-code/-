@@ -76,7 +76,7 @@ export default function AdminTestsPage() {
           placeholder="Описание (необязательно)"
           className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
         />
-        <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        <button className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
           Создать тест
         </button>
       </form>
@@ -87,7 +87,7 @@ export default function AdminTestsPage() {
           <div key={test.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
             <div className="flex items-center justify-between">
               <div>
-                <Link href={`/admin/tests/${test.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
+                <Link href={`/admin/tests/${test.id}`} className="font-medium text-slate-900 hover:text-emerald-600">
                   {test.title}
                 </Link>
                 <p className="text-xs text-slate-400">

@@ -107,7 +107,7 @@ export default function DashboardPage() {
                     .map((s) => `${s.title}: ${s.finished ? s.score : "—"}`)
                     .join(" · ")}
                 </td>
-                <td className="px-4 py-3 font-semibold text-indigo-600">{attempt.totalScore}</td>
+                <td className="px-4 py-3 font-semibold text-emerald-600">{attempt.totalScore}</td>
                 <td className="px-4 py-3 text-slate-500">
                   {attempt.finishedAt ? new Date(attempt.finishedAt).toLocaleString("ru-RU") : "не завершено"}
                 </td>

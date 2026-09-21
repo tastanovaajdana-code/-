@@ -105,7 +105,7 @@ export default function SectionQuizPage() {
           {remainingSeconds !== null && (
             <span
               className={`rounded-full px-3 py-1 text-sm font-mono font-semibold ${
-                isUrgent ? "bg-red-100 text-red-700" : "bg-indigo-100 text-indigo-700"
+                isUrgent ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"
               }`}
             >
               {formatTime(remainingSeconds)}
@@ -127,7 +127,7 @@ export default function SectionQuizPage() {
                   type="text"
                   value={answers[question.id] ?? ""}
                   onChange={(e) => setAnswer(question.id, e.target.value)}
-                  className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   placeholder="Введите ответ"
                 />
               ) : (
@@ -177,7 +177,7 @@ export default function SectionQuizPage() {
         <button
           onClick={submit}
           disabled={submitting}
-          className="mt-6 w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-60"
+          className="mt-6 w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
         >
           {submitting ? "Отправка..." : "Завершить раздел"}
         </button>

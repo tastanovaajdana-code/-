@@ -88,7 +88,7 @@ export default function AttemptOverviewPage() {
                 <button
                   onClick={() => router.push(`/attempt/${attempt.id}/section/${section.id}`)}
                   disabled={section.status === "done"}
-                  className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   {section.status === "done" ? "Готово" : section.status === "in_progress" ? "Продолжить" : "Начать"}
                 </button>

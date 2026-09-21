@@ -62,14 +62,14 @@ export default function ResultsPage() {
                   Правильных ответов: {section.correctCount} из {section.totalQuestions}
                 </p>
               </div>
-              <span className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700">
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
                 {section.score} балл(ов)
               </span>
             </div>
           ))}
         </div>
 
-        <div className="mt-6 flex items-center justify-between rounded-xl bg-indigo-600 p-5 text-white shadow-sm">
+        <div className="mt-6 flex items-center justify-between rounded-xl bg-emerald-600 p-5 text-white shadow-sm">
           <span className="text-lg font-medium">Итоговый балл</span>
           <span className="text-2xl font-bold">{data.totalScore}</span>
         </div>

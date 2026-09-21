@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function StartPage() {
@@ -23,6 +24,14 @@ export default function StartPage() {
   return (
     <main className="flex flex-1 items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <Image
+          src="/logo.jpg"
+          alt="Логотип"
+          width={56}
+          height={56}
+          className="mb-4 rounded-xl"
+          priority
+        />
         <h1 className="text-2xl font-semibold text-slate-900">ОРТ Тестирование</h1>
         <p className="mt-1 text-sm text-slate-500">
           Введите ваши данные, чтобы начать тестирование
@@ -36,7 +45,7 @@ export default function StartPage() {
               value={fio}
               onChange={(e) => setFio(e.target.value)}
               placeholder="Иванов Иван Иванович"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
           </div>
 
@@ -47,7 +56,7 @@ export default function StartPage() {
               value={group}
               onChange={(e) => setGroup(e.target.value)}
               placeholder="11-А"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
           </div>
 
@@ -55,7 +64,7 @@ export default function StartPage() {
 
           <button
             type="submit"
-            className="mt-2 w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+            className="mt-2 w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
           >
             Начать тестирование
           </button>
