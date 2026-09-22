@@ -26,6 +26,7 @@ async function createTestFromRows({ title, description, sectionsData, rows }) {
   }
 
   const orderBySection = new Map();
+  const questionsData = [];
   for (const row of rows) {
     const section = sectionByTitle.get(row.section);
     if (!section) {
@@ -35,25 +36,25 @@ async function createTestFromRows({ title, description, sectionsData, rows }) {
     const order = orderBySection.get(section.id) ?? 0;
     orderBySection.set(section.id, order + 1);
 
-    await prisma.question.create({
-      data: {
-        sectionId: section.id,
-        text: row.question_text,
-        type: row.type,
-        optionA: row.option_a || null,
-        optionB: row.option_b || null,
-        optionC: row.option_c || null,
-        optionD: row.option_d || null,
-        optionE: row.option_e || null,
-        correctAnswer: row.correct_answer,
-        points: row.points ?? 1,
-        order,
-        imageUrl: row.image_url || null,
-      },
+    questionsData.push({
+      sectionId: section.id,
+      text: row.question_text,
+      type: row.type,
+      optionA: row.option_a || null,
+      optionB: row.option_b || null,
+      optionC: row.option_c || null,
+      optionD: row.option_d || null,
+      optionE: row.option_e || null,
+      correctAnswer: row.correct_answer,
+      points: row.points ?? 1,
+      order,
+      imageUrl: row.image_url || null,
     });
   }
 
-  console.log(`Тест "${title}" с ${sectionsData.length} разделами и ${rows.length} вопросами создан`);
+  await prisma.question.createMany({ data: questionsData });
+
+  console.log(`Тест "${title}" с ${sectionsData.length} разделами и ${questionsData.length} вопросами создан`);
 }
 
 async function createTestIfMissing({ title, description, sectionsData, questionBank }) {

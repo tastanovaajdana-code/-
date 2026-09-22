@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 import tsoomo4Rows from "../../../../../prisma/data/tsoomo4.json";
 
+export const maxDuration = 60;
+
 function htmlResponse(body: string, status = 200) {
   return new Response(
     `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Настройка сайта ОРТ</title>
@@ -52,29 +54,30 @@ async function createTestFromRows(
   }
 
   const orderBySection = new Map<string, number>();
+  const questionsData = [];
   for (const row of rows) {
     const section = sectionByTitle.get(row.section);
     if (!section) continue;
     const order = orderBySection.get(section.id) ?? 0;
     orderBySection.set(section.id, order + 1);
 
-    await prisma.question.create({
-      data: {
-        sectionId: section.id,
-        text: row.question_text,
-        type: row.type,
-        optionA: row.option_a || null,
-        optionB: row.option_b || null,
-        optionC: row.option_c || null,
-        optionD: row.option_d || null,
-        optionE: row.option_e || null,
-        correctAnswer: row.correct_answer,
-        points: row.points ?? 1,
-        order,
-        imageUrl: row.image_url || null,
-      },
+    questionsData.push({
+      sectionId: section.id,
+      text: row.question_text,
+      type: row.type,
+      optionA: row.option_a || null,
+      optionB: row.option_b || null,
+      optionC: row.option_c || null,
+      optionD: row.option_d || null,
+      optionE: row.option_e || null,
+      correctAnswer: row.correct_answer,
+      points: row.points ?? 1,
+      order,
+      imageUrl: row.image_url || null,
     });
   }
+
+  await prisma.question.createMany({ data: questionsData });
 }
 
 async function createTestIfMissing(
