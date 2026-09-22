@@ -15,7 +15,7 @@ export async function PATCH(
   if (typeof body.type === "string") data.type = body.type;
   if (typeof body.correctAnswer === "string") data.correctAnswer = body.correctAnswer.trim();
   if (body.points !== undefined) data.points = Number(body.points);
-  for (const key of ["optionA", "optionB", "optionC", "optionD", "imageUrl"] as const) {
+  for (const key of ["optionA", "optionB", "optionC", "optionD", "optionE", "imageUrl"] as const) {
     if (body[key] !== undefined) data[key] = body[key] || null;
   }
 

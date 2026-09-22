@@ -67,6 +67,7 @@ export async function POST(
         optionB: row.option_b || null,
         optionC: row.option_c || null,
         optionD: row.option_d || null,
+        optionE: row.option_e || null,
         correctAnswer: row.correct_answer,
         points: row.points ?? 1,
         order,

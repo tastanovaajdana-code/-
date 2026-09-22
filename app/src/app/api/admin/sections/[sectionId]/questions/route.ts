@@ -31,6 +31,7 @@ export async function POST(
       optionB: body.optionB || null,
       optionC: body.optionC || null,
       optionD: body.optionD || null,
+      optionE: body.optionE || null,
       correctAnswer,
       points: Number.isFinite(points) && points > 0 ? points : 1,
       order: count,

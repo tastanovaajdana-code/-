@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
+import tsoomo4Rows from "../../../../../prisma/data/tsoomo4.json";
 
 function htmlResponse(body: string, status = 200) {
   return new Response(
@@ -14,6 +15,67 @@ function htmlResponse(body: string, status = 200) {
 
 type SectionSeed = { title: string; timeLimitMinutes: number; maxScore: number };
 type QuestionSeed = { text: string; optionA: string; optionB: string; optionC: string; optionD: string; correct: string };
+type ImportRow = {
+  section: string;
+  question_text: string;
+  type: string;
+  option_a?: string | null;
+  option_b?: string | null;
+  option_c?: string | null;
+  option_d?: string | null;
+  option_e?: string | null;
+  correct_answer: string;
+  points?: number;
+  image_url?: string | null;
+};
+
+async function createTestFromRows(
+  title: string,
+  description: string,
+  sectionsData: SectionSeed[],
+  rows: ImportRow[]
+) {
+  const existingTest = await prisma.test.findFirst({ where: { title } });
+  if (existingTest) return;
+
+  const test = await prisma.test.create({
+    data: { title, description, isActive: true },
+  });
+
+  const sectionByTitle = new Map<string, { id: string }>();
+  for (let i = 0; i < sectionsData.length; i++) {
+    const s = sectionsData[i];
+    const section = await prisma.section.create({
+      data: { testId: test.id, title: s.title, order: i, timeLimitMinutes: s.timeLimitMinutes, maxScore: s.maxScore },
+    });
+    sectionByTitle.set(s.title, section);
+  }
+
+  const orderBySection = new Map<string, number>();
+  for (const row of rows) {
+    const section = sectionByTitle.get(row.section);
+    if (!section) continue;
+    const order = orderBySection.get(section.id) ?? 0;
+    orderBySection.set(section.id, order + 1);
+
+    await prisma.question.create({
+      data: {
+        sectionId: section.id,
+        text: row.question_text,
+        type: row.type,
+        optionA: row.option_a || null,
+        optionB: row.option_b || null,
+        optionC: row.option_c || null,
+        optionD: row.option_d || null,
+        optionE: row.option_e || null,
+        correctAnswer: row.correct_answer,
+        points: row.points ?? 1,
+        order,
+        imageUrl: row.image_url || null,
+      },
+    });
+  }
+}
 
 async function createTestIfMissing(
   title: string,
@@ -142,6 +204,18 @@ export async function GET(request: Request) {
         { text: 'В каком слове пропущена буква "и": д...ректор', optionA: "е", optionB: "и", optionC: "я", optionD: "а", correct: "option_b" },
       ],
     }
+  );
+
+  await createTestFromRows(
+    "ЦООМО — тест №4",
+    "Полный пробный тест ЦООМО (Математика, Аналогия, Чтение, Грамматика)",
+    [
+      { title: "Математика", timeLimitMinutes: 90, maxScore: 67 },
+      { title: "Аналогия", timeLimitMinutes: 30, maxScore: 63 },
+      { title: "Чтение", timeLimitMinutes: 60, maxScore: 63 },
+      { title: "Грамматика", timeLimitMinutes: 35, maxScore: 50 },
+    ],
+    tsoomo4Rows as ImportRow[]
   );
 
   return htmlResponse(`

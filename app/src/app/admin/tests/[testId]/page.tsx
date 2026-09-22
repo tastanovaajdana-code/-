@@ -11,6 +11,7 @@ type Question = {
   optionB: string | null;
   optionC: string | null;
   optionD: string | null;
+  optionE: string | null;
   correctAnswer: string;
   points: number;
   order: number;
@@ -41,6 +42,7 @@ const emptyQuestionForm = {
   optionB: "",
   optionC: "",
   optionD: "",
+  optionE: "",
   correctAnswer: "",
   points: "1",
   imageUrl: "",
@@ -173,6 +175,7 @@ export default function AdminTestDetailPage() {
         optionB: form.optionB || null,
         optionC: form.optionC || null,
         optionD: form.optionD || null,
+        optionE: form.optionE || null,
         correctAnswer: form.correctAnswer.trim(),
         points: Number(form.points) || 1,
         imageUrl: form.imageUrl || null,
@@ -240,7 +243,7 @@ export default function AdminTestDetailPage() {
         </div>
         <p className="mt-1 text-xs text-slate-500">
           Поддерживаются .xlsx, .csv, .json. Колонки: section, question_text, type
-          (single/multiple/text), option_a..option_d, correct_answer (например option_b или
+          (single/multiple/text), option_a..option_e, correct_answer (например option_b или
           option_a,option_c), points. Значение колонки &quot;section&quot; должно совпадать с
           названием одного из разделов ниже.
         </p>
@@ -471,7 +474,7 @@ export default function AdminTestDetailPage() {
                   </div>
                   {getForm(section.id).type !== "text" && (
                     <div className="grid grid-cols-2 gap-2">
-                      {(["optionA", "optionB", "optionC", "optionD"] as const).map((key) => (
+                      {(["optionA", "optionB", "optionC", "optionD", "optionE"] as const).map((key) => (
                         <input
                           key={key}
                           type="text"

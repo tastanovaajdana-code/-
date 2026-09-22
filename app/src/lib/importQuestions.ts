@@ -8,6 +8,7 @@ export type ImportedQuestionRow = {
   option_b?: string;
   option_c?: string;
   option_d?: string;
+  option_e?: string;
   correct_answer: string;
   points?: number;
   image_url?: string;
@@ -49,6 +50,7 @@ function coerceRow(raw: Record<string, unknown>, index: number, errors: string[]
     option_b: get("option_b") || undefined,
     option_c: get("option_c") || undefined,
     option_d: get("option_d") || undefined,
+    option_e: get("option_e") || undefined,
     correct_answer: get("correct_answer"),
     points: Number.isFinite(points) && points > 0 ? points : 1,
     image_url: get("image_url") || undefined,

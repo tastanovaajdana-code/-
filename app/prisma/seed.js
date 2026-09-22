@@ -1,7 +1,60 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
+const fs = require("fs");
+const path = require("path");
 
 const prisma = new PrismaClient();
+
+async function createTestFromRows({ title, description, sectionsData, rows }) {
+  const existingTest = await prisma.test.findFirst({ where: { title } });
+  if (existingTest) {
+    console.log(`Тест "${title}" уже существует, пропускаем сидирование`);
+    return;
+  }
+
+  const test = await prisma.test.create({
+    data: { title, description, isActive: true },
+  });
+
+  const sectionByTitle = new Map();
+  for (let i = 0; i < sectionsData.length; i++) {
+    const s = sectionsData[i];
+    const section = await prisma.section.create({
+      data: { testId: test.id, title: s.title, order: i, timeLimitMinutes: s.timeLimitMinutes, maxScore: s.maxScore },
+    });
+    sectionByTitle.set(s.title, section);
+  }
+
+  const orderBySection = new Map();
+  for (const row of rows) {
+    const section = sectionByTitle.get(row.section);
+    if (!section) {
+      console.warn(`Раздел "${row.section}" не найден в тесте "${title}", пропускаем вопрос`);
+      continue;
+    }
+    const order = orderBySection.get(section.id) ?? 0;
+    orderBySection.set(section.id, order + 1);
+
+    await prisma.question.create({
+      data: {
+        sectionId: section.id,
+        text: row.question_text,
+        type: row.type,
+        optionA: row.option_a || null,
+        optionB: row.option_b || null,
+        optionC: row.option_c || null,
+        optionD: row.option_d || null,
+        optionE: row.option_e || null,
+        correctAnswer: row.correct_answer,
+        points: row.points ?? 1,
+        order,
+        imageUrl: row.image_url || null,
+      },
+    });
+  }
+
+  console.log(`Тест "${title}" с ${sectionsData.length} разделами и ${rows.length} вопросами создан`);
+}
 
 async function createTestIfMissing({ title, description, sectionsData, questionBank }) {
   const existingTest = await prisma.test.findFirst({ where: { title } });
@@ -120,6 +173,21 @@ async function main() {
         { text: "В каком слове пропущена буква \"и\": д...ректор", optionA: "е", optionB: "и", optionC: "я", optionD: "а", correct: "option_b" },
       ],
     },
+  });
+
+  const tsoomo4Rows = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "data", "tsoomo4.json"), "utf-8")
+  );
+  await createTestFromRows({
+    title: "ЦООМО — тест №4",
+    description: "Полный пробный тест ЦООМО (Математика, Аналогия, Чтение, Грамматика)",
+    sectionsData: [
+      { title: "Математика", timeLimitMinutes: 90, maxScore: 67 },
+      { title: "Аналогия", timeLimitMinutes: 30, maxScore: 63 },
+      { title: "Чтение", timeLimitMinutes: 60, maxScore: 63 },
+      { title: "Грамматика", timeLimitMinutes: 35, maxScore: 50 },
+    ],
+    rows: tsoomo4Rows,
   });
 }
 

@@ -54,6 +54,7 @@ model Question {
   optionB       String?
   optionC       String?
   optionD       String?
+  optionE       String?
   correctAnswer String   // "option_b" | "option_a,option_c" | free text
   points        Float    @default(1)
   order         Int      @default(0)

@@ -60,6 +60,7 @@ export async function GET(
       optionB: q.optionB,
       optionC: q.optionC,
       optionD: q.optionD,
+      optionE: q.optionE,
       imageUrl: q.imageUrl,
     })),
   });

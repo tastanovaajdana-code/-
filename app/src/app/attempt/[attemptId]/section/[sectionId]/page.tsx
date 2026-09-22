@@ -11,6 +11,7 @@ type Question = {
   optionB: string | null;
   optionC: string | null;
   optionD: string | null;
+  optionE: string | null;
   imageUrl: string | null;
 };
 
@@ -279,7 +280,7 @@ export default function SectionQuizPage() {
             />
           ) : (
             <div className="mt-4 flex flex-col gap-2.5">
-              {(["A", "B", "C", "D"] as const).map((letter) => {
+              {(["A", "B", "C", "D", "E"] as const).map((letter) => {
                 const optionKey = `option${letter}` as keyof Question;
                 const optionText = question[optionKey];
                 if (!optionText) return null;
