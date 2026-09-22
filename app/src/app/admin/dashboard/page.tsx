@@ -171,7 +171,37 @@ export default function DashboardPage() {
         </select>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="mt-6 flex flex-col gap-3 sm:hidden">
+        {attempts?.map((attempt) => (
+          <div key={attempt.id} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium text-slate-900">{attempt.studentFio}</p>
+                <p className="truncate text-xs text-slate-500">{attempt.studentEmail ?? "—"}</p>
+              </div>
+              <span className="flex-none rounded-full bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-600">
+                {attempt.totalScore}
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              {attempt.groupName} · {attempt.testTitle}
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              {attempt.sections.map((s) => `${s.title}: ${s.finished ? s.score : "—"}`).join(" · ")}
+            </p>
+            <p className="mt-2 text-xs text-slate-400">
+              {attempt.finishedAt ? new Date(attempt.finishedAt).toLocaleString("ru-RU") : "не завершено"}
+            </p>
+          </div>
+        ))}
+        {attempts?.length === 0 && (
+          <p className="rounded-xl bg-white px-4 py-8 text-center text-sm text-slate-400 shadow-sm ring-1 ring-slate-200">
+            Нет данных
+          </p>
+        )}
+      </div>
+
+      <div className="mt-6 hidden overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-slate-200 sm:block">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
