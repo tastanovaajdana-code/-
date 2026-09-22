@@ -183,7 +183,7 @@ async function main() {
     title: "ЦООМО — тест №4",
     description: "Полный пробный тест ЦООМО (Математика, Аналогия, Чтение, Грамматика)",
     sectionsData: [
-      { title: "Математика", timeLimitMinutes: 90, maxScore: 67 },
+      { title: "Математика", timeLimitMinutes: 90, maxScore: 50 },
       { title: "Аналогия", timeLimitMinutes: 30, maxScore: 63 },
       { title: "Чтение", timeLimitMinutes: 60, maxScore: 63 },
       { title: "Грамматика", timeLimitMinutes: 35, maxScore: 50 },
