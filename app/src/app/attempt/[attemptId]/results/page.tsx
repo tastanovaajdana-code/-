@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 type SectionResult = {
   id: string;
@@ -74,6 +74,7 @@ function ScoreRing({ percent }: { percent: number }) {
 
 export default function ResultsPage() {
   const params = useParams<{ attemptId: string }>();
+  const router = useRouter();
   const [data, setData] = useState<ResultsData | null>(null);
   const [error, setError] = useState("");
 
@@ -126,9 +127,14 @@ export default function ResultsPage() {
                 ? Math.round((section.correctCount / section.totalQuestions) * 100)
                 : 0;
             return (
-              <div
+              <button
                 key={section.id}
-                className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md"
+                type="button"
+                disabled={!section.finished}
+                onClick={() => router.push(`/attempt/${params.attemptId}/section/${section.id}/review`)}
+                className={`rounded-xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200 transition ${
+                  section.finished ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md hover:ring-emerald-300" : "cursor-default opacity-80"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -137,9 +143,16 @@ export default function ResultsPage() {
                       Правильных ответов: {section.correctCount} из {section.totalQuestions}
                     </p>
                   </div>
-                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
-                    {section.score} балл(ов)
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
+                      {section.score} балл(ов)
+                    </span>
+                    {section.finished && (
+                      <svg className="h-4 w-4 flex-none text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
@@ -147,7 +160,10 @@ export default function ResultsPage() {
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-              </div>
+                {section.finished && (
+                  <p className="mt-2 text-xs font-medium text-emerald-600">Посмотреть разбор ответов →</p>
+                )}
+              </button>
             );
           })}
         </div>

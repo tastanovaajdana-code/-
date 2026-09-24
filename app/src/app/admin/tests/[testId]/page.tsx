@@ -16,6 +16,7 @@ type Question = {
   points: number;
   order: number;
   imageUrl: string | null;
+  explanation: string | null;
 };
 
 type Section = {
@@ -46,6 +47,7 @@ const emptyQuestionForm = {
   correctAnswer: "",
   points: "1",
   imageUrl: "",
+  explanation: "",
 };
 
 const MAX_IMAGE_DIMENSION = 1200;
@@ -102,6 +104,9 @@ export default function AdminTestDetailPage() {
   const [importResult, setImportResult] = useState<{ createdCount: number; errors: string[] } | null>(null);
   const [importing, setImporting] = useState(false);
   const [imageError, setImageError] = useState<Record<string, string>>({});
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState(emptyQuestionForm);
+  const [editImageError, setEditImageError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -179,6 +184,7 @@ export default function AdminTestDetailPage() {
         correctAnswer: form.correctAnswer.trim(),
         points: Number(form.points) || 1,
         imageUrl: form.imageUrl || null,
+        explanation: form.explanation.trim() || null,
       }),
     });
     setQuestionForms((prev) => ({ ...prev, [sectionId]: emptyQuestionForm }));
@@ -187,6 +193,68 @@ export default function AdminTestDetailPage() {
 
   async function removeQuestion(id: string) {
     await fetch(`/api/admin/questions/${id}`, { method: "DELETE" });
+    load();
+  }
+
+  function startEdit(question: Question) {
+    setEditingQuestionId(question.id);
+    setEditImageError("");
+    setEditForm({
+      text: question.text,
+      type: question.type,
+      optionA: question.optionA ?? "",
+      optionB: question.optionB ?? "",
+      optionC: question.optionC ?? "",
+      optionD: question.optionD ?? "",
+      optionE: question.optionE ?? "",
+      correctAnswer: question.correctAnswer,
+      points: String(question.points),
+      imageUrl: question.imageUrl ?? "",
+      explanation: question.explanation ?? "",
+    });
+  }
+
+  function cancelEdit() {
+    setEditingQuestionId(null);
+    setEditForm(emptyQuestionForm);
+    setEditImageError("");
+  }
+
+  async function handleEditImage(file: File | undefined) {
+    if (!file) return;
+    setEditImageError("");
+    if (file.size > MAX_IMAGE_BYTES) {
+      setEditImageError("Файл слишком большой (макс. 2 МБ)");
+      return;
+    }
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      setEditForm((prev) => ({ ...prev, imageUrl: dataUrl }));
+    } catch {
+      setEditImageError("Не удалось обработать изображение");
+    }
+  }
+
+  async function saveEdit(questionId: string) {
+    if (!editForm.text.trim() || !editForm.correctAnswer.trim()) return;
+    await fetch(`/api/admin/questions/${questionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: editForm.text.trim(),
+        type: editForm.type,
+        optionA: editForm.optionA || null,
+        optionB: editForm.optionB || null,
+        optionC: editForm.optionC || null,
+        optionD: editForm.optionD || null,
+        optionE: editForm.optionE || null,
+        correctAnswer: editForm.correctAnswer.trim(),
+        points: Number(editForm.points) || 1,
+        imageUrl: editForm.imageUrl || null,
+        explanation: editForm.explanation.trim() || null,
+      }),
+    });
+    cancelEdit();
     load();
   }
 
@@ -244,8 +312,8 @@ export default function AdminTestDetailPage() {
         <p className="mt-1 text-xs text-slate-500">
           Поддерживаются .xlsx, .csv, .json. Колонки: section, question_text, type
           (single/multiple/text), option_a..option_e, correct_answer (например option_b или
-          option_a,option_c), points. Значение колонки &quot;section&quot; должно совпадать с
-          названием одного из разделов ниже.
+          option_a,option_c), points, explanation (необязательно). Значение колонки &quot;section&quot;
+          должно совпадать с названием одного из разделов ниже.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-3">
           <input ref={fileInputRef} type="file" accept=".xlsx,.csv,.json" className="text-sm" />
@@ -390,45 +458,173 @@ export default function AdminTestDetailPage() {
               })()}
 
               <div className="mt-4 flex flex-col gap-2">
-                {section.questions.map((question, index) => (
-                  <div
-                    key={question.id}
-                    className="group flex items-start justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2.5 transition hover:border-emerald-100 hover:bg-emerald-50/30"
-                  >
-                    <div className="text-sm">
-                      <p className="font-medium text-slate-800">
-                        {index + 1}. {question.text}
-                      </p>
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
-                        <span className={`rounded-full px-2 py-0.5 font-medium ${typeBadge[question.type] ?? "bg-slate-100 text-slate-600"}`}>
-                          {typeLabel[question.type] ?? question.type}
-                        </span>
-                        <span>Ответ: {question.correctAnswer}</span>
-                        <span>· Балл: {question.points}</span>
+                {section.questions.map((question, index) =>
+                  editingQuestionId === question.id ? (
+                    <div key={question.id} className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3">
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="text"
+                          placeholder="Текст вопроса"
+                          value={editForm.text}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, text: e.target.value }))}
+                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                        />
+                        <div className="flex gap-2">
+                          <select
+                            value={editForm.type}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, type: e.target.value }))}
+                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                          >
+                            <option value="single">Один верный ответ</option>
+                            <option value="multiple">Несколько верных</option>
+                            <option value="text">Текстовый ответ</option>
+                          </select>
+                          <input
+                            type="number"
+                            placeholder="Балл"
+                            value={editForm.points}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, points: e.target.value }))}
+                            className="w-24 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                          />
+                        </div>
+                        {editForm.type !== "text" && (
+                          <div className="grid grid-cols-2 gap-2">
+                            {(["optionA", "optionB", "optionC", "optionD", "optionE"] as const).map((key) => (
+                              <input
+                                key={key}
+                                type="text"
+                                placeholder={`Вариант ${key.slice(-1)}`}
+                                value={editForm[key]}
+                                onChange={(e) => setEditForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                                className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <input
+                          type="text"
+                          placeholder={
+                            editForm.type === "text"
+                              ? "Правильный ответ (текст)"
+                              : "Правильный ответ, напр. option_b или option_a,option_c"
+                          }
+                          value={editForm.correctAnswer}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, correctAnswer: e.target.value }))}
+                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                        />
+                        <div className="flex flex-wrap items-center gap-3">
+                          <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:border-emerald-400 hover:text-emerald-600">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Фото к вопросу
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleEditImage(e.target.files?.[0])}
+                            />
+                          </label>
+                          {editForm.imageUrl && (
+                            <div className="flex items-center gap-2">
+                              <img src={editForm.imageUrl} alt="" className="h-14 w-14 rounded-lg object-cover ring-1 ring-slate-200" />
+                              <button
+                                type="button"
+                                onClick={() => setEditForm((prev) => ({ ...prev, imageUrl: "" }))}
+                                className="text-xs text-red-600 hover:underline"
+                              >
+                                Убрать фото
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {editImageError && <p className="text-xs text-red-600">{editImageError}</p>}
+                        <textarea
+                          placeholder="Объяснение правильного ответа (необязательно)"
+                          value={editForm.explanation}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, explanation: e.target.value }))}
+                          rows={2}
+                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveEdit(question.id)}
+                            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-700"
+                          >
+                            Сохранить
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
+                          >
+                            Отмена
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    {question.imageUrl && (
-                      <img
-                        src={question.imageUrl}
-                        alt=""
-                        className="h-12 w-12 flex-none rounded-lg object-cover ring-1 ring-slate-200"
-                      />
-                    )}
-                    <button
-                      onClick={() => removeQuestion(question.id)}
-                      className="flex-none rounded-lg p-1 text-slate-300 opacity-0 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
-                      title="Удалить вопрос"
+                  ) : (
+                    <div
+                      key={question.id}
+                      className="group flex items-start justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2.5 transition hover:border-emerald-100 hover:bg-emerald-50/30"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      <div className="text-sm">
+                        <p className="font-medium text-slate-800">
+                          {index + 1}. {question.text}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
+                          <span className={`rounded-full px-2 py-0.5 font-medium ${typeBadge[question.type] ?? "bg-slate-100 text-slate-600"}`}>
+                            {typeLabel[question.type] ?? question.type}
+                          </span>
+                          <span>Ответ: {question.correctAnswer}</span>
+                          <span>· Балл: {question.points}</span>
+                          {question.explanation && (
+                            <span className="flex items-center gap-0.5 text-emerald-600" title={question.explanation}>
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              объяснение
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {question.imageUrl && (
+                        <img
+                          src={question.imageUrl}
+                          alt=""
+                          className="h-12 w-12 flex-none rounded-lg object-cover ring-1 ring-slate-200"
                         />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                      )}
+                      <div className="flex flex-none items-center gap-1 opacity-0 transition group-hover:opacity-100">
+                        <button
+                          onClick={() => startEdit(question)}
+                          className="rounded-lg p-1 text-slate-300 hover:bg-emerald-50 hover:text-emerald-600"
+                          title="Редактировать вопрос"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => removeQuestion(question.id)}
+                          className="rounded-lg p-1 text-slate-300 hover:bg-red-50 hover:text-red-600"
+                          title="Удалить вопрос"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )
+                )}
                 {section.questions.length === 0 && (
                   <p className="rounded-lg bg-slate-50 px-3 py-3 text-center text-sm text-slate-400">
                     В этом разделе пока нет вопросов
@@ -536,6 +732,15 @@ export default function AdminTestDetailPage() {
                   {imageError[section.id] && (
                     <p className="text-xs text-red-600">{imageError[section.id]}</p>
                   )}
+                  <textarea
+                    placeholder="Объяснение правильного ответа (необязательно) — покажется ученику после сдачи теста в разборе ответов"
+                    value={getForm(section.id).explanation}
+                    onChange={(e) =>
+                      setQuestionForms((prev) => ({ ...prev, [section.id]: { ...getForm(section.id), explanation: e.target.value } }))
+                    }
+                    rows={2}
+                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                  />
                   <button
                     onClick={() => addQuestion(section.id)}
                     className="self-start rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-700"

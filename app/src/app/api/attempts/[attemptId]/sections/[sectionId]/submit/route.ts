@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { computeSectionScore } from "@/lib/scoring";
+import { computeSectionScore, isAnswerCorrect } from "@/lib/scoring";
 
 export async function POST(
   request: Request,
@@ -76,12 +76,15 @@ export async function POST(
               questionId: q.id,
             },
           },
-          update: { givenAnswer: answersMap.get(q.id)!, isCorrect: false },
+          update: {
+            givenAnswer: answersMap.get(q.id)!,
+            isCorrect: isAnswerCorrect(q, answersMap.get(q.id)),
+          },
           create: {
             sectionResultId: sectionResult.id,
             questionId: q.id,
             givenAnswer: answersMap.get(q.id)!,
-            isCorrect: false,
+            isCorrect: isAnswerCorrect(q, answersMap.get(q.id)),
           },
         })
       )

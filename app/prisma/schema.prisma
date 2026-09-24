@@ -59,6 +59,7 @@ model Question {
   points        Float    @default(1)
   order         Int      @default(0)
   imageUrl      String?  @db.Text
+  explanation   String?  @db.Text
   answers       Answer[]
 }
 

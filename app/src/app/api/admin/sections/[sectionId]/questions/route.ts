@@ -36,6 +36,7 @@ export async function POST(
       points: Number.isFinite(points) && points > 0 ? points : 1,
       order: count,
       imageUrl: typeof body.imageUrl === "string" && body.imageUrl ? body.imageUrl : null,
+      explanation: typeof body.explanation === "string" && body.explanation ? body.explanation : null,
     },
   });
 

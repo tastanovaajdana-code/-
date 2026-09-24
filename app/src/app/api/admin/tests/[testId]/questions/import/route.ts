@@ -44,7 +44,7 @@ export async function POST(
     }
 
     if (row.type === "single" || row.type === "multiple") {
-      const validKeys = ["option_a", "option_b", "option_c", "option_d"];
+      const validKeys = ["option_a", "option_b", "option_c", "option_d", "option_e"];
       const answerKeys = row.correct_answer.split(",").map((s) => s.trim());
       const invalid = answerKeys.filter((k) => !validKeys.includes(k));
       if (invalid.length > 0) {
@@ -72,6 +72,7 @@ export async function POST(
         points: row.points ?? 1,
         order,
         imageUrl: row.image_url || null,
+        explanation: row.explanation || null,
       },
     });
     createdCount += 1;
