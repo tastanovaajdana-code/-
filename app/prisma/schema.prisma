@@ -110,13 +110,6 @@ model AttemptSectionResult {
   @@unique([attemptId, sectionId])
 }
 
-model StudentGoal {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  targetPercent Int
-  updatedAt     DateTime @updatedAt
-}
-
 model Answer {
   id                     String                @id @default(cuid())
   sectionResultId        String
