@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { getStudentSession } from "@/lib/studentAuth";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ testId: string }> }
 ) {
   const { testId } = await params;
-  const session = await getStudentSession();
+  const url = new URL(request.url);
+  const myEmail = (url.searchParams.get("email") || "").trim().toLowerCase();
 
   const test = await prisma.test.findUnique({ where: { id: testId } });
   if (!test) return Response.json({ error: "Тест не найден" }, { status: 404 });
@@ -22,7 +22,7 @@ export async function GET(
     studentFio: a.studentFio,
     groupName: a.group.name,
     totalScore: a.totalScore,
-    isMe: session ? a.studentEmail === session.email : false,
+    isMe: myEmail ? a.studentEmail === myEmail : false,
   }));
 
   return Response.json({ testTitle: test.title, rows });

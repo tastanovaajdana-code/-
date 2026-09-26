@@ -23,7 +23,9 @@ export default function TestRatingPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`/api/tests/${params.testId}/rating`)
+    const email = sessionStorage.getItem("ort_student_email") || "";
+    const query = email ? `?email=${encodeURIComponent(email)}` : "";
+    fetch(`/api/tests/${params.testId}/rating${query}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then(setData)
       .catch(() => setError("Не удалось загрузить рейтинг"));

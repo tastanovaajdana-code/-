@@ -13,16 +13,20 @@ type TestSummary = {
 
 export default function TestsPage() {
   const router = useRouter();
-  const [fio, setFio] = useState("");
   const [tests, setTests] = useState<TestSummary[] | null>(null);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState<string | null>(null);
+  const [fio, setFio] = useState("");
 
   useEffect(() => {
-    fetch("/api/student/me")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setFio(data.fio))
-      .catch(() => router.replace("/"));
+    const fio = sessionStorage.getItem("ort_student_fio");
+    const email = sessionStorage.getItem("ort_student_email");
+    const group = sessionStorage.getItem("ort_student_group");
+    if (!fio || !email || !group) {
+      router.replace("/");
+      return;
+    }
+    setFio(fio);
 
     fetch("/api/tests")
       .then((res) => res.json())
@@ -34,10 +38,13 @@ export default function TestsPage() {
     setStarting(testId);
     setError("");
     try {
+      const fio = sessionStorage.getItem("ort_student_fio");
+      const email = sessionStorage.getItem("ort_student_email");
+      const group = sessionStorage.getItem("ort_student_group");
       const res = await fetch("/api/attempts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ testId }),
+        body: JSON.stringify({ fio, email, group, testId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Ошибка");

@@ -37,12 +37,15 @@ export default function StatsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/student/me")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((d) => setFio(d.fio))
-      .catch(() => router.replace("/"));
+    const storedFio = sessionStorage.getItem("ort_student_fio");
+    const email = sessionStorage.getItem("ort_student_email");
+    if (!storedFio || !email) {
+      router.replace("/");
+      return;
+    }
+    setFio(storedFio);
 
-    fetch("/api/student/stats")
+    fetch(`/api/student/stats?email=${encodeURIComponent(email)}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then(setData)
       .catch(() => setError("Не удалось загрузить статистику"));

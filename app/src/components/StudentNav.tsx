@@ -7,8 +7,10 @@ export function StudentNav({ fio }: { fio?: string }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  async function logout() {
-    await fetch("/api/student/logout", { method: "POST" });
+  function logout() {
+    sessionStorage.removeItem("ort_student_fio");
+    sessionStorage.removeItem("ort_student_email");
+    sessionStorage.removeItem("ort_student_group");
     router.push("/");
   }
 
