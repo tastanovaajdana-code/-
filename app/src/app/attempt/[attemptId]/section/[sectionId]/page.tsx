@@ -293,11 +293,9 @@ export default function SectionQuizPage() {
               {showPassage && (
                 <div className="border-t border-sky-200 px-3 py-3">
                   {question.passage.imageUrl && (
-                    <img
-                      src={question.passage.imageUrl}
-                      alt=""
-                      className="mb-3 max-h-96 w-full rounded-lg object-contain ring-1 ring-slate-200"
-                    />
+                    <div className="mb-3 max-h-[70vh] overflow-y-auto rounded-lg ring-1 ring-slate-200">
+                      <img src={question.passage.imageUrl} alt="" className="w-full" />
+                    </div>
                   )}
                   {question.passage.text && (
                     <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
