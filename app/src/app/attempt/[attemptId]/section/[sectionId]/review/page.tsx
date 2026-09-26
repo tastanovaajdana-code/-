@@ -13,6 +13,7 @@ type ReviewQuestion = {
   optionD: string | null;
   optionE: string | null;
   imageUrl: string | null;
+  passage: { id: string; title: string | null; text: string | null; imageUrl: string | null } | null;
   correctAnswer: string;
   explanation: string | null;
   points: number;
@@ -133,6 +134,28 @@ export default function SectionReviewPage() {
                     <p className="mt-0.5 text-xs text-slate-400">{question.points} балл(ов)</p>
                   </div>
                 </div>
+
+                {question.passage && (
+                  <details className="mt-3 rounded-lg border border-sky-200 bg-sky-50/60 pl-9">
+                    <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium text-sky-700">
+                      {question.passage.title || "Текст для чтения"}
+                    </summary>
+                    <div className="border-t border-sky-200 px-3 py-3">
+                      {question.passage.imageUrl && (
+                        <img
+                          src={question.passage.imageUrl}
+                          alt=""
+                          className="mb-3 max-h-96 w-full rounded-lg object-contain ring-1 ring-slate-200"
+                        />
+                      )}
+                      {question.passage.text && (
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                          {question.passage.text}
+                        </p>
+                      )}
+                    </div>
+                  </details>
+                )}
 
                 {question.imageUrl && (
                   <img

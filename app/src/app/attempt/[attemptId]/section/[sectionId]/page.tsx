@@ -13,6 +13,7 @@ type Question = {
   optionD: string | null;
   optionE: string | null;
   imageUrl: string | null;
+  passage: { id: string; title: string | null; text: string | null; imageUrl: string | null } | null;
 };
 
 type SectionData = {
@@ -44,6 +45,7 @@ export default function SectionQuizPage() {
   const [error, setError] = useState("");
   const submittedRef = useRef(false);
   const [studentFio, setStudentFio] = useState("");
+  const [showPassage, setShowPassage] = useState(true);
 
   const submit = useCallback(async () => {
     if (submittedRef.current) return;
@@ -93,6 +95,11 @@ export default function SectionQuizPage() {
     const timer = setTimeout(() => setRemainingSeconds((s) => (s !== null ? s - 1 : s)), 1000);
     return () => clearTimeout(timer);
   }, [remainingSeconds, submit]);
+
+  const currentPassageId = data?.questions?.[currentIndex]?.passage?.id ?? null;
+  useEffect(() => {
+    setShowPassage(true);
+  }, [currentPassageId]);
 
   if (!data || !data.questions) {
     return <main className="flex flex-1 items-center justify-center text-white">Загрузка...</main>;
@@ -259,6 +266,48 @@ export default function SectionQuizPage() {
               {data.sectionTitle}
             </span>
           </div>
+
+          {question.passage && (
+            <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50/60">
+              <button
+                type="button"
+                onClick={() => setShowPassage((v) => !v)}
+                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-medium text-sky-700"
+              >
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-4 w-4 flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  {question.passage.title || "Текст для чтения"}
+                </span>
+                <svg
+                  className={`h-4 w-4 flex-none transition-transform ${showPassage ? "rotate-180" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showPassage && (
+                <div className="border-t border-sky-200 px-3 py-3">
+                  {question.passage.imageUrl && (
+                    <img
+                      src={question.passage.imageUrl}
+                      alt=""
+                      className="mb-3 max-h-96 w-full rounded-lg object-contain ring-1 ring-slate-200"
+                    />
+                  )}
+                  {question.passage.text && (
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                      {question.passage.text}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <p className="mt-4 text-base font-medium text-slate-900">{question.text}</p>
 

@@ -41,13 +41,27 @@ model Section {
   timeLimitMinutes Int        @default(30)
   maxScore         Float?
   questions        Question[]
+  passages         Passage[]
   results          AttemptSectionResult[]
+}
+
+model Passage {
+  id        String     @id @default(cuid())
+  sectionId String
+  section   Section    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title     String?
+  text      String?    @db.Text
+  imageUrl  String?    @db.Text
+  order     Int        @default(0)
+  questions Question[]
 }
 
 model Question {
   id            String   @id @default(cuid())
   sectionId     String
   section       Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  passageId     String?
+  passage       Passage? @relation(fields: [passageId], references: [id], onDelete: SetNull)
   text          String
   type          String   @default("single") // single | multiple | text
   optionA       String?

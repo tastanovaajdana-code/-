@@ -13,7 +13,7 @@ export async function GET(
 
   const section = await prisma.section.findUnique({
     where: { id: sectionId },
-    include: { questions: { orderBy: { order: "asc" } } },
+    include: { questions: { orderBy: { order: "asc" }, include: { passage: true } } },
   });
   if (!section || section.testId !== attempt.testId) {
     return Response.json({ error: "Раздел не найден" }, { status: 404 });
@@ -62,6 +62,9 @@ export async function GET(
       optionD: q.optionD,
       optionE: q.optionE,
       imageUrl: q.imageUrl,
+      passage: q.passage
+        ? { id: q.passage.id, title: q.passage.title, text: q.passage.text, imageUrl: q.passage.imageUrl }
+        : null,
     })),
   });
 }

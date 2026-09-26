@@ -14,7 +14,10 @@ export async function GET(
     include: {
       sections: {
         orderBy: { order: "asc" },
-        include: { questions: { orderBy: { order: "asc" } } },
+        include: {
+          questions: { orderBy: { order: "asc" } },
+          passages: { orderBy: { order: "asc" } },
+        },
       },
     },
   });
@@ -33,6 +36,7 @@ export async function GET(
       timeLimitMinutes: s.timeLimitMinutes,
       maxScore: s.maxScore,
       questions: s.questions,
+      passages: s.passages,
     })),
   });
 }

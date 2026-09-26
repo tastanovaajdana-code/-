@@ -13,6 +13,9 @@ export type ImportedQuestionRow = {
   points?: number;
   image_url?: string;
   explanation?: string;
+  passage_title?: string;
+  passage_text?: string;
+  passage_image_url?: string;
 };
 
 export type ParsedImportResult = {
@@ -56,6 +59,9 @@ function coerceRow(raw: Record<string, unknown>, index: number, errors: string[]
     points: Number.isFinite(points) && points > 0 ? points : 1,
     image_url: get("image_url") || undefined,
     explanation: get("explanation") || undefined,
+    passage_title: get("passage_title") || undefined,
+    passage_text: get("passage_text") || undefined,
+    passage_image_url: get("passage_image_url") || undefined,
   };
 }
 

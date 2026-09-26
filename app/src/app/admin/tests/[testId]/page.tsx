@@ -17,6 +17,15 @@ type Question = {
   order: number;
   imageUrl: string | null;
   explanation: string | null;
+  passageId: string | null;
+};
+
+type Passage = {
+  id: string;
+  title: string | null;
+  text: string | null;
+  imageUrl: string | null;
+  order: number;
 };
 
 type Section = {
@@ -26,6 +35,7 @@ type Section = {
   timeLimitMinutes: number;
   maxScore: number | null;
   questions: Question[];
+  passages: Passage[];
 };
 
 type TestDetail = {
@@ -48,7 +58,10 @@ const emptyQuestionForm = {
   points: "1",
   imageUrl: "",
   explanation: "",
+  passageId: "",
 };
+
+const emptyPassageForm = { title: "", text: "", imageUrl: "" };
 
 const MAX_IMAGE_DIMENSION = 1200;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -108,6 +121,10 @@ export default function AdminTestDetailPage() {
   const [editForm, setEditForm] = useState(emptyQuestionForm);
   const [editImageError, setEditImageError] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const [passageForms, setPassageForms] = useState<Record<string, typeof emptyPassageForm>>({});
+  const [passageImageError, setPassageImageError] = useState<Record<string, string>>({});
+  const [editingPassageId, setEditingPassageId] = useState<string | null>(null);
+  const [editPassageForm, setEditPassageForm] = useState(emptyPassageForm);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -159,6 +176,81 @@ export default function AdminTestDetailPage() {
     return questionForms[sectionId] ?? emptyQuestionForm;
   }
 
+  function getPassageForm(sectionId: string) {
+    return passageForms[sectionId] ?? emptyPassageForm;
+  }
+
+  async function handlePassageImage(sectionId: string, file: File | undefined) {
+    if (!file) return;
+    setPassageImageError((prev) => ({ ...prev, [sectionId]: "" }));
+    if (file.size > MAX_IMAGE_BYTES) {
+      setPassageImageError((prev) => ({ ...prev, [sectionId]: "Файл слишком большой (макс. 2 МБ)" }));
+      return;
+    }
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      setPassageForms((prev) => ({ ...prev, [sectionId]: { ...getPassageForm(sectionId), imageUrl: dataUrl } }));
+    } catch {
+      setPassageImageError((prev) => ({ ...prev, [sectionId]: "Не удалось обработать изображение" }));
+    }
+  }
+
+  async function addPassage(sectionId: string) {
+    const form = getPassageForm(sectionId);
+    if (!form.title.trim() && !form.text.trim() && !form.imageUrl) return;
+    await fetch(`/api/admin/sections/${sectionId}/passages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: form.title.trim() || null,
+        text: form.text.trim() || null,
+        imageUrl: form.imageUrl || null,
+      }),
+    });
+    setPassageForms((prev) => ({ ...prev, [sectionId]: emptyPassageForm }));
+    load();
+  }
+
+  function startEditPassage(passage: Passage) {
+    setEditingPassageId(passage.id);
+    setEditPassageForm({
+      title: passage.title ?? "",
+      text: passage.text ?? "",
+      imageUrl: passage.imageUrl ?? "",
+    });
+  }
+
+  function cancelEditPassage() {
+    setEditingPassageId(null);
+    setEditPassageForm(emptyPassageForm);
+  }
+
+  async function saveEditPassage(passageId: string) {
+    await fetch(`/api/admin/passages/${passageId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: editPassageForm.title.trim() || null,
+        text: editPassageForm.text.trim() || null,
+        imageUrl: editPassageForm.imageUrl || null,
+      }),
+    });
+    cancelEditPassage();
+    load();
+  }
+
+  async function removePassage(id: string) {
+    if (!confirm("Удалить текст? У вопросов, привязанных к нему, пропадёт ссылка на текст.")) return;
+    setDeleteError("");
+    const res = await fetch(`/api/admin/passages/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setDeleteError(data.error || "Не удалось удалить текст");
+      return;
+    }
+    load();
+  }
+
   async function handleQuestionImage(sectionId: string, file: File | undefined) {
     if (!file) return;
     setImageError((prev) => ({ ...prev, [sectionId]: "" }));
@@ -192,6 +284,7 @@ export default function AdminTestDetailPage() {
         points: Number(form.points) || 1,
         imageUrl: form.imageUrl || null,
         explanation: form.explanation.trim() || null,
+        passageId: form.passageId || null,
       }),
     });
     setQuestionForms((prev) => ({ ...prev, [sectionId]: emptyQuestionForm }));
@@ -224,6 +317,7 @@ export default function AdminTestDetailPage() {
       points: String(question.points),
       imageUrl: question.imageUrl ?? "",
       explanation: question.explanation ?? "",
+      passageId: question.passageId ?? "",
     });
   }
 
@@ -265,6 +359,7 @@ export default function AdminTestDetailPage() {
         points: Number(editForm.points) || 1,
         imageUrl: editForm.imageUrl || null,
         explanation: editForm.explanation.trim() || null,
+        passageId: editForm.passageId || null,
       }),
     });
     cancelEdit();
@@ -332,7 +427,10 @@ export default function AdminTestDetailPage() {
           Поддерживаются .xlsx, .csv, .json. Колонки: section, question_text, type
           (single/multiple/text), option_a..option_e, correct_answer (например option_b или
           option_a,option_c), points, explanation (необязательно). Значение колонки &quot;section&quot;
-          должно совпадать с названием одного из разделов ниже.
+          должно совпадать с названием одного из разделов ниже. Для текста перед вопросами (раздел
+          «Чтение») добавьте колонку passage_title — одинаковое значение в нескольких строках
+          объединит эти вопросы под одним текстом; текст самого пассажа — в passage_text
+          (и/или passage_image_url), достаточно указать один раз в первой строке группы.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-3">
           <input ref={fileInputRef} type="file" accept=".xlsx,.csv,.json" className="text-sm" />
@@ -476,6 +574,172 @@ export default function AdminTestDetailPage() {
                 );
               })()}
 
+              <div className="mt-4 rounded-lg border border-sky-100 bg-sky-50/40 p-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-sky-700">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s4.332.477 5.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  Тексты для чтения (пассажи)
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Добавьте текст или фото сюда, затем привяжите к нему нужные вопросы ниже — ученик сможет открыть этот текст на каждом таком вопросе.
+                </p>
+
+                {section.passages.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-2">
+                    {section.passages.map((passage) =>
+                      editingPassageId === passage.id ? (
+                        <div key={passage.id} className="rounded-lg border border-sky-200 bg-white p-3">
+                          <div className="flex flex-col gap-2">
+                            <input
+                              type="text"
+                              placeholder="Заголовок (необязательно)"
+                              value={editPassageForm.title}
+                              onChange={(e) => setEditPassageForm((prev) => ({ ...prev, title: e.target.value }))}
+                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                            />
+                            <textarea
+                              placeholder="Текст для чтения"
+                              value={editPassageForm.text}
+                              onChange={(e) => setEditPassageForm((prev) => ({ ...prev, text: e.target.value }))}
+                              rows={5}
+                              className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => saveEditPassage(passage.id)}
+                                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-700"
+                              >
+                                Сохранить
+                              </button>
+                              <button
+                                onClick={cancelEditPassage}
+                                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100"
+                              >
+                                Отмена
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          key={passage.id}
+                          className="group flex items-start justify-between gap-3 rounded-lg bg-white px-3 py-2.5 ring-1 ring-slate-100"
+                        >
+                          <div className="min-w-0 text-sm">
+                            <p className="font-medium text-slate-800">{passage.title || `Текст #${passage.order + 1}`}</p>
+                            {passage.text && (
+                              <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{passage.text}</p>
+                            )}
+                            <p className="mt-1 text-xs text-slate-400">
+                              Вопросов привязано: {section.questions.filter((q) => q.passageId === passage.id).length}
+                            </p>
+                          </div>
+                          {passage.imageUrl && (
+                            <img src={passage.imageUrl} alt="" className="h-12 w-12 flex-none rounded-lg object-cover ring-1 ring-slate-200" />
+                          )}
+                          <div className="flex flex-none items-center gap-1 opacity-0 transition group-hover:opacity-100">
+                            <button
+                              onClick={() => startEditPassage(passage)}
+                              className="rounded-lg p-1 text-slate-300 hover:bg-emerald-50 hover:text-emerald-600"
+                              title="Редактировать текст"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => removePassage(passage.id)}
+                              className="rounded-lg p-1 text-slate-300 hover:bg-red-50 hover:text-red-600"
+                              title="Удалить текст"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+                <details className="mt-3 rounded-lg border border-sky-100 bg-white">
+                  <summary className="cursor-pointer select-none rounded-lg px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-50">
+                    + Добавить текст
+                  </summary>
+                  <div className="flex flex-col gap-2 border-t border-sky-100 p-3">
+                    <input
+                      type="text"
+                      placeholder="Заголовок (необязательно, напр. «Текст 1»)"
+                      value={getPassageForm(section.id).title}
+                      onChange={(e) =>
+                        setPassageForms((prev) => ({ ...prev, [section.id]: { ...getPassageForm(section.id), title: e.target.value } }))
+                      }
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                    <textarea
+                      placeholder="Текст для чтения"
+                      value={getPassageForm(section.id).text}
+                      onChange={(e) =>
+                        setPassageForms((prev) => ({ ...prev, [section.id]: { ...getPassageForm(section.id), text: e.target.value } }))
+                      }
+                      rows={5}
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:border-emerald-400 hover:text-emerald-600">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Фото текста
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handlePassageImage(section.id, e.target.files?.[0])}
+                        />
+                      </label>
+                      {getPassageForm(section.id).imageUrl && (
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={getPassageForm(section.id).imageUrl}
+                            alt=""
+                            className="h-14 w-14 rounded-lg object-cover ring-1 ring-slate-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPassageForms((prev) => ({ ...prev, [section.id]: { ...getPassageForm(section.id), imageUrl: "" } }))
+                            }
+                            className="text-xs text-red-600 hover:underline"
+                          >
+                            Убрать фото
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {passageImageError[section.id] && (
+                      <p className="text-xs text-red-600">{passageImageError[section.id]}</p>
+                    )}
+                    <button
+                      onClick={() => addPassage(section.id)}
+                      className="self-start rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-sky-600/20 transition hover:bg-sky-700"
+                    >
+                      Добавить текст
+                    </button>
+                  </div>
+                </details>
+              </div>
+
               <div className="mt-4 flex flex-col gap-2">
                 {section.questions.map((question, index) =>
                   editingQuestionId === question.id ? (
@@ -531,6 +795,20 @@ export default function AdminTestDetailPage() {
                           onChange={(e) => setEditForm((prev) => ({ ...prev, correctAnswer: e.target.value }))}
                           className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
                         />
+                        {section.passages.length > 0 && (
+                          <select
+                            value={editForm.passageId}
+                            onChange={(e) => setEditForm((prev) => ({ ...prev, passageId: e.target.value }))}
+                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                          >
+                            <option value="">Без текста</option>
+                            {section.passages.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.title || `Текст #${p.order + 1}`}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                         <div className="flex flex-wrap items-center gap-3">
                           <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:border-emerald-400 hover:text-emerald-600">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -596,6 +874,11 @@ export default function AdminTestDetailPage() {
                           </span>
                           <span>Ответ: {question.correctAnswer}</span>
                           <span>· Балл: {question.points}</span>
+                          {question.passageId && (
+                            <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-700">
+                              {section.passages.find((p) => p.id === question.passageId)?.title || "текст"}
+                            </span>
+                          )}
                           {question.explanation && (
                             <span className="flex items-center gap-0.5 text-emerald-600" title={question.explanation}>
                               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -716,6 +999,22 @@ export default function AdminTestDetailPage() {
                     }
                     className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
                   />
+                  {section.passages.length > 0 && (
+                    <select
+                      value={getForm(section.id).passageId}
+                      onChange={(e) =>
+                        setQuestionForms((prev) => ({ ...prev, [section.id]: { ...getForm(section.id), passageId: e.target.value } }))
+                      }
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                    >
+                      <option value="">Без текста</option>
+                      {section.passages.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.title || `Текст #${p.order + 1}`}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <div className="flex flex-wrap items-center gap-3">
                     <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 transition hover:border-emerald-400 hover:text-emerald-600">
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -30,6 +30,13 @@ export async function POST(
     sectionCounts.set(section.id, await prisma.question.count({ where: { sectionId: section.id } }));
   }
 
+  const passageCounts = new Map<string, number>();
+  for (const section of sections) {
+    passageCounts.set(section.id, await prisma.passage.count({ where: { sectionId: section.id } }));
+  }
+  // key: `${sectionId}::${passageTitle.toLowerCase()}`
+  const passageByKey = new Map<string, string>();
+
   let createdCount = 0;
   const availableSectionNames = sections.map((s) => s.title).join(", ");
 
@@ -58,9 +65,34 @@ export async function POST(
     const order = sectionCounts.get(section.id) ?? 0;
     sectionCounts.set(section.id, order + 1);
 
+    let passageId: string | null = null;
+    const passageTitle = row.passage_title?.trim();
+    if (passageTitle) {
+      const key = `${section.id}::${passageTitle.toLowerCase()}`;
+      const existingId = passageByKey.get(key);
+      if (existingId) {
+        passageId = existingId;
+      } else {
+        const passageOrder = passageCounts.get(section.id) ?? 0;
+        passageCounts.set(section.id, passageOrder + 1);
+        const passage = await prisma.passage.create({
+          data: {
+            sectionId: section.id,
+            title: passageTitle,
+            text: row.passage_text || null,
+            imageUrl: row.passage_image_url || null,
+            order: passageOrder,
+          },
+        });
+        passageByKey.set(key, passage.id);
+        passageId = passage.id;
+      }
+    }
+
     await prisma.question.create({
       data: {
         sectionId: section.id,
+        passageId,
         text: row.question_text,
         type: row.type,
         optionA: row.option_a || null,

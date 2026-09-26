@@ -37,6 +37,7 @@ export async function POST(
       order: count,
       imageUrl: typeof body.imageUrl === "string" && body.imageUrl ? body.imageUrl : null,
       explanation: typeof body.explanation === "string" && body.explanation ? body.explanation : null,
+      passageId: typeof body.passageId === "string" && body.passageId ? body.passageId : null,
     },
   });
 
