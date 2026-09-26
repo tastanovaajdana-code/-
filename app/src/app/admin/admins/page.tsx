@@ -7,6 +7,8 @@ type Admin = {
   id: string;
   login: string;
   role: "admin" | "curator";
+  displayName: string | null;
+  contact: string | null;
   createdAt: string;
 };
 
@@ -17,6 +19,8 @@ export default function AdminsPage() {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"admin" | "curator">("curator");
+  const [displayName, setDisplayName] = useState("");
+  const [contact, setContact] = useState("");
   const [error, setError] = useState("");
 
   function load() {
@@ -40,7 +44,13 @@ export default function AdminsPage() {
     const res = await fetch("/api/admin/admins", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login: login.trim(), password, role }),
+      body: JSON.stringify({
+        login: login.trim(),
+        password,
+        role,
+        displayName: displayName.trim() || null,
+        contact: contact.trim() || null,
+      }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -50,6 +60,8 @@ export default function AdminsPage() {
     setLogin("");
     setPassword("");
     setRole("curator");
+    setDisplayName("");
+    setContact("");
     load();
   }
 
@@ -65,6 +77,15 @@ export default function AdminsPage() {
       setError(data.error || "Ошибка");
       return;
     }
+    load();
+  }
+
+  async function saveContact(admin: Admin, displayName: string, contact: string) {
+    await fetch(`/api/admin/admins/${admin.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ displayName: displayName.trim() || null, contact: contact.trim() || null }),
+    });
     load();
   }
 
@@ -132,6 +153,20 @@ export default function AdminsPage() {
           <option value="curator">Куратор</option>
           <option value="admin">Администратор</option>
         </select>
+        <input
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          placeholder="Имя (для страницы «Куратор»)"
+          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+        />
+        <input
+          type="text"
+          value={contact}
+          onChange={(e) => setContact(e.target.value)}
+          placeholder="Контакт (телефон/Telegram)"
+          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+        />
         <button className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-700">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -145,7 +180,7 @@ export default function AdminsPage() {
         {admins.map((admin) => (
           <div
             key={admin.id}
-            className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200"
+            className="flex flex-wrap items-center gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200"
           >
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-slate-900">
@@ -156,6 +191,20 @@ export default function AdminsPage() {
                 {new Date(admin.createdAt).toLocaleDateString("ru-RU")}
               </p>
             </div>
+            <input
+              type="text"
+              defaultValue={admin.displayName ?? ""}
+              placeholder="Имя"
+              onBlur={(e) => saveContact(admin, e.target.value, admin.contact ?? "")}
+              className="w-32 rounded-lg border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-emerald-500"
+            />
+            <input
+              type="text"
+              defaultValue={admin.contact ?? ""}
+              placeholder="Контакт"
+              onBlur={(e) => saveContact(admin, admin.displayName ?? "", e.target.value)}
+              className="w-36 rounded-lg border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-emerald-500"
+            />
             <span className={`rounded-full px-3 py-1 text-xs font-medium ${roleBadge[admin.role]}`}>
               {roleLabel[admin.role]}
             </span>

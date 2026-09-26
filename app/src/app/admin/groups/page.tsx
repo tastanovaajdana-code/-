@@ -3,19 +3,33 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Group = { id: string; name: string; attemptsCount: number };
+type Group = { id: string; name: string; attemptsCount: number; curatorId: string | null; curatorName: string | null };
+type AdminUserOption = { id: string; login: string; displayName: string | null };
 
 export default function GroupsPage() {
   const router = useRouter();
   const [groups, setGroups] = useState<Group[]>([]);
+  const [admins, setAdmins] = useState<AdminUserOption[]>([]);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
 
   function load() {
     fetch("/api/admin/groups").then((r) => r.json()).then(setGroups);
+    fetch("/api/admin/admins")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setAdmins);
   }
 
   useEffect(load, []);
+
+  async function assignCurator(groupId: string, curatorId: string) {
+    await fetch(`/api/admin/groups/${groupId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ curatorId: curatorId || null }),
+    });
+    load();
+  }
 
   useEffect(() => {
     fetch("/api/admin/me")
@@ -130,6 +144,18 @@ export default function GroupsPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-slate-900">{group.name}</p>
                 <p className="text-xs text-slate-400">{group.attemptsCount} попыток</p>
+                <select
+                  value={group.curatorId ?? ""}
+                  onChange={(e) => assignCurator(group.id, e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs outline-none focus:border-emerald-500"
+                >
+                  <option value="">Без куратора</option>
+                  {admins.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.displayName || a.login}
+                    </option>
+                  ))}
+                </select>
               </div>
               <button
                 onClick={() => removeGroup(group.id)}

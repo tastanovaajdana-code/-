@@ -7,7 +7,7 @@ export async function GET() {
 
   const admins = await prisma.adminUser.findMany({
     orderBy: { createdAt: "asc" },
-    select: { id: true, login: true, role: true, createdAt: true },
+    select: { id: true, login: true, role: true, displayName: true, contact: true, createdAt: true },
   });
 
   return Response.json(admins);
@@ -21,6 +21,8 @@ export async function POST(request: Request) {
   const login = String(body.login ?? "").trim();
   const password = String(body.password ?? "");
   const role = body.role === "curator" ? "curator" : "admin";
+  const displayName = body.displayName ? String(body.displayName).trim() : null;
+  const contact = body.contact ? String(body.contact).trim() : null;
 
   if (!login || !password) {
     return Response.json({ error: "Укажите логин и пароль" }, { status: 400 });
@@ -36,8 +38,8 @@ export async function POST(request: Request) {
 
   const passwordHash = await hashPassword(password);
   const admin = await prisma.adminUser.create({
-    data: { login, passwordHash, role },
-    select: { id: true, login: true, role: true, createdAt: true },
+    data: { login, passwordHash, role, displayName, contact },
+    select: { id: true, login: true, role: true, displayName: true, contact: true, createdAt: true },
   });
 
   return Response.json(admin);

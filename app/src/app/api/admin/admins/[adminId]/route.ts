@@ -26,6 +26,9 @@ export async function PATCH(
     data.role = body.role;
   }
 
+  if (body.displayName !== undefined) data.displayName = body.displayName ? String(body.displayName).trim() : null;
+  if (body.contact !== undefined) data.contact = body.contact ? String(body.contact).trim() : null;
+
   await prisma.adminUser.update({ where: { id: adminId }, data });
   return Response.json({ ok: true });
 }

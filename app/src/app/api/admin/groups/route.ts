@@ -7,11 +7,17 @@ export async function GET() {
 
   const groups = await prisma.group.findMany({
     orderBy: { name: "asc" },
-    include: { _count: { select: { attempts: true } } },
+    include: { _count: { select: { attempts: true } }, curator: true },
   });
 
   return Response.json(
-    groups.map((g) => ({ id: g.id, name: g.name, attemptsCount: g._count.attempts }))
+    groups.map((g) => ({
+      id: g.id,
+      name: g.name,
+      attemptsCount: g._count.attempts,
+      curatorId: g.curatorId,
+      curatorName: g.curator?.displayName ?? g.curator?.login ?? null,
+    }))
   );
 }
 
