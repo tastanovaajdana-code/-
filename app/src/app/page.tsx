@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BrandScene } from "@/components/BrandScene";
-
-const GROUPS = ["Прогресс", "Грант", "ЖРТ"];
 
 export default function StartPage() {
   const router = useRouter();
   const [fio, setFio] = useState("");
   const [email, setEmail] = useState("");
   const [group, setGroup] = useState("");
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/groups")
+      .then((res) => res.json())
+      .then(setGroups)
+      .catch(() => {});
+  }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -124,9 +130,9 @@ export default function StartPage() {
                   className="w-full appearance-none rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
                 >
                   <option value="">Выберите группу</option>
-                  {GROUPS.map((g) => (
-                    <option key={g} value={g}>
-                      {g}
+                  {groups.map((g) => (
+                    <option key={g.id} value={g.name}>
+                      {g.name}
                     </option>
                   ))}
                 </select>
