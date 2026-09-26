@@ -31,6 +31,10 @@ export async function DELETE(
   if (!session) return Response.json({ error: "Не авторизован" }, { status: 401 });
 
   const { questionId } = await params;
-  await prisma.question.delete({ where: { id: questionId } }).catch(() => null);
+  try {
+    await prisma.question.delete({ where: { id: questionId } });
+  } catch {
+    return Response.json({ error: "Не удалось удалить вопрос" }, { status: 500 });
+  }
   return Response.json({ ok: true });
 }

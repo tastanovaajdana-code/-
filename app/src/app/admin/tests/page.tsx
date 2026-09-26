@@ -53,7 +53,13 @@ export default function AdminTestsPage() {
 
   async function removeTest(id: string) {
     if (!confirm("Удалить тест вместе с разделами и вопросами?")) return;
-    await fetch(`/api/admin/tests/${id}`, { method: "DELETE" });
+    setError("");
+    const res = await fetch(`/api/admin/tests/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "Не удалось удалить тест");
+      return;
+    }
     load();
   }
 

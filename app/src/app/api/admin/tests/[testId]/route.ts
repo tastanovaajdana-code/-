@@ -63,6 +63,10 @@ export async function DELETE(
   if (!session) return Response.json({ error: "Не авторизован" }, { status: 401 });
 
   const { testId } = await params;
-  await prisma.test.delete({ where: { id: testId } }).catch(() => null);
+  try {
+    await prisma.test.delete({ where: { id: testId } });
+  } catch {
+    return Response.json({ error: "Не удалось удалить тест" }, { status: 500 });
+  }
   return Response.json({ ok: true });
 }

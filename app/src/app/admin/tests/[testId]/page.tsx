@@ -107,6 +107,7 @@ export default function AdminTestDetailPage() {
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(emptyQuestionForm);
   const [editImageError, setEditImageError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
@@ -144,7 +145,13 @@ export default function AdminTestDetailPage() {
 
   async function removeSection(id: string) {
     if (!confirm("Удалить раздел вместе с вопросами?")) return;
-    await fetch(`/api/admin/sections/${id}`, { method: "DELETE" });
+    setDeleteError("");
+    const res = await fetch(`/api/admin/sections/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setDeleteError(data.error || "Не удалось удалить раздел");
+      return;
+    }
     load();
   }
 
@@ -192,7 +199,13 @@ export default function AdminTestDetailPage() {
   }
 
   async function removeQuestion(id: string) {
-    await fetch(`/api/admin/questions/${id}`, { method: "DELETE" });
+    setDeleteError("");
+    const res = await fetch(`/api/admin/questions/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setDeleteError(data.error || "Не удалось удалить вопрос");
+      return;
+    }
     load();
   }
 
@@ -297,6 +310,12 @@ export default function AdminTestDetailPage() {
           {test.description && <p className="text-sm text-slate-500">{test.description}</p>}
         </div>
       </div>
+
+      {deleteError && (
+        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 ring-1 ring-red-200">
+          {deleteError}
+        </p>
+      )}
 
       <section className="mt-6 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
         <div className="flex items-center gap-2">
