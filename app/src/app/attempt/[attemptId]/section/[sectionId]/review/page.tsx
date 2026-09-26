@@ -29,6 +29,8 @@ type ReviewData = {
   questions: ReviewQuestion[];
 };
 
+const CYRILLIC_LETTER: Record<string, string> = { A: "А", B: "Б", C: "В", D: "Г", E: "Д" };
+
 function splitSet(value: string): Set<string> {
   return new Set(
     value
@@ -207,7 +209,7 @@ export default function SectionReviewPage() {
                               <span className="h-2 w-2 rounded-full bg-white" />
                             )}
                           </span>
-                          <span className="font-medium">{letter})</span>
+                          <span className="font-medium">{CYRILLIC_LETTER[letter]})</span>
                           <span>{optionText as string}</span>
                           {isGivenOption && !isCorrectOption && (
                             <span className="ml-auto text-xs font-medium text-red-500">ваш ответ</span>

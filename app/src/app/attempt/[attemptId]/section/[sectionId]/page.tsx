@@ -25,6 +25,8 @@ type SectionData = {
   questions?: Question[];
 };
 
+const CYRILLIC_LETTER: Record<string, string> = { A: "А", B: "Б", C: "В", D: "Г", E: "Д" };
+
 function formatTime(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -371,7 +373,7 @@ export default function SectionQuizPage() {
                         }
                       }}
                     />
-                    <span className="font-medium">{letter})</span>
+                    <span className="font-medium">{CYRILLIC_LETTER[letter]})</span>
                     <span>{optionText as string}</span>
                   </label>
                 );
