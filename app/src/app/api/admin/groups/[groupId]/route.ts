@@ -9,6 +9,10 @@ export async function DELETE(
   if (!session) return Response.json({ error: "Не авторизован" }, { status: 401 });
 
   const { groupId } = await params;
-  await prisma.group.delete({ where: { id: groupId } }).catch(() => null);
+  try {
+    await prisma.group.delete({ where: { id: groupId } });
+  } catch {
+    return Response.json({ error: "Не удалось удалить группу" }, { status: 500 });
+  }
   return Response.json({ ok: true });
 }

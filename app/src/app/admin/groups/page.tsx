@@ -35,7 +35,13 @@ export default function GroupsPage() {
 
   async function removeGroup(id: string) {
     if (!confirm("Удалить группу? Это также удалит связанные попытки.")) return;
-    await fetch(`/api/admin/groups/${id}`, { method: "DELETE" });
+    setError("");
+    const res = await fetch(`/api/admin/groups/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "Не удалось удалить группу");
+      return;
+    }
     load();
   }
 

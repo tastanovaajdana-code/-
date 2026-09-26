@@ -68,7 +68,7 @@ model Attempt {
   studentFio   String
   studentEmail String?
   groupId      String
-  group        Group     @relation(fields: [groupId], references: [id])
+  group        Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
   testId       String
   test         Test      @relation(fields: [testId], references: [id])
   startedAt    DateTime  @default(now())
