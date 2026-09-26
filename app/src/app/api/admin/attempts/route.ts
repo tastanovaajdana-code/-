@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       groupId: groupId || undefined,
       testId: testId || undefined,
     },
-    orderBy: { startedAt: "desc" },
+    orderBy: { totalScore: "desc" },
     include: {
       group: true,
       test: { include: { sections: { orderBy: { order: "asc" } } } },

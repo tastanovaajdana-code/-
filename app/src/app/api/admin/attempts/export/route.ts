@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
   const attempts = await prisma.attempt.findMany({
     where: { groupId: groupId || undefined, testId: testId || undefined },
-    orderBy: { startedAt: "desc" },
+    orderBy: { totalScore: "desc" },
     include: {
       group: true,
       test: { include: { sections: { orderBy: { order: "asc" } } } },
