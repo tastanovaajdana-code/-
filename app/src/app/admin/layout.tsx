@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogoMark } from "@/components/BrandScene";
@@ -7,6 +8,15 @@ import { LogoMark } from "@/components/BrandScene";
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [role, setRole] = useState<"admin" | "curator" | null>(null);
+
+  useEffect(() => {
+    if (pathname === "/admin/login") return;
+    fetch("/api/admin/me")
+      .then((r) => r.json())
+      .then((data) => setRole(data.role ?? null))
+      .catch(() => {});
+  }, [pathname]);
 
   if (pathname === "/admin/login") {
     return <>{children}</>;
@@ -19,8 +29,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const links = [
     { href: "/admin/dashboard", label: "Дашборд" },
-    { href: "/admin/tests", label: "Тесты" },
-    { href: "/admin/groups", label: "Группы" },
+    ...(role === "admin"
+      ? [
+          { href: "/admin/tests", label: "Тесты" },
+          { href: "/admin/groups", label: "Группы" },
+          { href: "/admin/admins", label: "Пользователи" },
+        ]
+      : []),
   ];
 
   return (

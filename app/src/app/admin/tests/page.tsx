@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type Test = {
   id: string;
@@ -12,13 +13,22 @@ type Test = {
 };
 
 export default function AdminTestsPage() {
+  const router = useRouter();
   const [tests, setTests] = useState<Test[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    fetch("/api/admin/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.role === "curator") router.replace("/admin/dashboard");
+      });
+  }, [router]);
+
   function load() {
-    fetch("/api/admin/tests").then((r) => r.json()).then(setTests);
+    fetch("/api/admin/tests").then((r) => (r.ok ? r.json() : [])).then(setTests);
   }
 
   useEffect(load, []);

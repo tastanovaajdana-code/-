@@ -5,5 +5,5 @@ export async function GET() {
   if (!session) {
     return Response.json({ error: "Не авторизован" }, { status: 401 });
   }
-  return Response.json({ login: session.login });
+  return Response.json({ id: session.adminId, login: session.login, role: session.role });
 }

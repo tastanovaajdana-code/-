@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getAdminSession } from "@/lib/auth";
+import { getAdminSession, requireFullAdmin } from "@/lib/auth";
 
 export async function GET() {
   const session = await getAdminSession();
@@ -29,7 +29,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getAdminSession();
+  const session = await requireFullAdmin();
   if (!session) return Response.json({ error: "Не авторизован" }, { status: 401 });
 
   const body = await request.json();

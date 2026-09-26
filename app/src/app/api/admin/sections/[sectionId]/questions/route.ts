@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { getAdminSession } from "@/lib/auth";
+import { requireFullAdmin } from "@/lib/auth";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ sectionId: string }> }
 ) {
-  const session = await getAdminSession();
+  const session = await requireFullAdmin();
   if (!session) return Response.json({ error: "Не авторизован" }, { status: 401 });
 
   const { sectionId } = await params;

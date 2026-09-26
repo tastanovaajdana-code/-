@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { getAdminSession } from "@/lib/auth";
+import { requireFullAdmin } from "@/lib/auth";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ testId: string }> }
 ) {
-  const session = await getAdminSession();
+  const session = await requireFullAdmin();
   if (!session) return Response.json({ error: "Не авторизован" }, { status: 401 });
 
   const { testId } = await params;
@@ -45,7 +45,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ testId: string }> }
 ) {
-  const session = await getAdminSession();
+  const session = await requireFullAdmin();
   if (!session) return Response.json({ error: "Не авторизован" }, { status: 401 });
 
   const { testId } = await params;
@@ -63,7 +63,7 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ testId: string }> }
 ) {
-  const session = await getAdminSession();
+  const session = await requireFullAdmin();
   if (!session) return Response.json({ error: "Не авторизован" }, { status: 401 });
 
   const { testId } = await params;

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Group = { id: string; name: string; attemptsCount: number };
 
 export default function GroupsPage() {
+  const router = useRouter();
   const [groups, setGroups] = useState<Group[]>([]);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -14,6 +16,14 @@ export default function GroupsPage() {
   }
 
   useEffect(load, []);
+
+  useEffect(() => {
+    fetch("/api/admin/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.role === "curator") router.replace("/admin/dashboard");
+      });
+  }, [router]);
 
   async function addGroup(e: React.FormEvent) {
     e.preventDefault();

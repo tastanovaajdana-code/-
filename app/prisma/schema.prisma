@@ -9,9 +9,10 @@ generator client {
 }
 
 model AdminUser {
-  id           String @id @default(cuid())
-  login        String @unique
+  id           String   @id @default(cuid())
+  login        String   @unique
   passwordHash String
+  role         String   @default("admin") // "admin" | "curator"
   createdAt    DateTime @default(now())
 }
 
