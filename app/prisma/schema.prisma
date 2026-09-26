@@ -117,13 +117,46 @@ model AttemptSectionResult {
   @@unique([attemptId, sectionId])
 }
 
-model StudentGoal {
-  id            String   @id @default(cuid())
-  email         String
-  subjectId     String?
-  subject       Subject? @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  targetPercent Int
-  updatedAt     DateTime @updatedAt
+model University {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  order     Int         @default(0)
+  createdAt DateTime    @default(now())
+  programs  Program[]
+  goals     TrackGoal[]
+}
+
+model Program {
+  id           String      @id @default(cuid())
+  universityId String
+  university   University  @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  name         String
+  order        Int         @default(0)
+  goals        TrackGoal[]
+
+  @@unique([universityId, name])
+}
+
+model TrackGoal {
+  id           String      @id @default(cuid())
+  email        String
+  track        String      // "ort" | "manas"
+  targetScore  Int?
+  targetDate   DateTime?
+  universityId String?
+  university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
+  programId    String?
+  program      Program?    @relation(fields: [programId], references: [id], onDelete: SetNull)
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([email, track])
+}
+
+model WeeklyPlan {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  hoursPerWeek Int
+  updatedAt    DateTime @updatedAt
 }
 
 model Subject {
@@ -133,7 +166,6 @@ model Subject {
   order     Int       @default(0)
   createdAt DateTime  @default(now())
   lessons   Lesson[]
-  goals     StudentGoal[]
 
   @@unique([track, name])
 }
