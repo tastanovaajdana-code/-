@@ -57,6 +57,83 @@ async function createTestFromRows({ title, description, sectionsData, rows }) {
   console.log(`Тест "${title}" с ${sectionsData.length} разделами и ${questionsData.length} вопросами создан`);
 }
 
+async function createOrExtendTestFromRows({ title, description, sectionsData, rows }) {
+  let test = await prisma.test.findFirst({ where: { title } });
+  const sectionByTitle = new Map();
+
+  if (!test) {
+    test = await prisma.test.create({ data: { title, description, isActive: true } });
+    for (let i = 0; i < sectionsData.length; i++) {
+      const s = sectionsData[i];
+      const section = await prisma.section.create({
+        data: { testId: test.id, title: s.title, order: i, timeLimitMinutes: s.timeLimitMinutes, maxScore: s.maxScore },
+      });
+      sectionByTitle.set(s.title, section);
+    }
+  } else {
+    const existingSections = await prisma.section.findMany({ where: { testId: test.id } });
+    for (const es of existingSections) sectionByTitle.set(es.title, es);
+    for (let i = 0; i < sectionsData.length; i++) {
+      const s = sectionsData[i];
+      const existing = sectionByTitle.get(s.title);
+      if (existing) {
+        const updated = await prisma.section.update({
+          where: { id: existing.id },
+          data: { timeLimitMinutes: s.timeLimitMinutes, maxScore: s.maxScore },
+        });
+        sectionByTitle.set(s.title, updated);
+      } else {
+        const section = await prisma.section.create({
+          data: { testId: test.id, title: s.title, order: existingSections.length + i, timeLimitMinutes: s.timeLimitMinutes, maxScore: s.maxScore },
+        });
+        sectionByTitle.set(s.title, section);
+      }
+    }
+  }
+
+  const orderBySection = new Map();
+  for (const section of sectionByTitle.values()) {
+    const count = await prisma.question.count({ where: { sectionId: section.id } });
+    orderBySection.set(section.id, count);
+  }
+
+  let added = 0;
+  for (const row of rows) {
+    const section = sectionByTitle.get(row.section);
+    if (!section) {
+      console.warn(`Раздел "${row.section}" не найден в тесте "${title}", пропускаем вопрос`);
+      continue;
+    }
+    const alreadyExists = await prisma.question.findFirst({
+      where: { sectionId: section.id, text: row.question_text },
+    });
+    if (alreadyExists) continue;
+
+    const order = orderBySection.get(section.id) ?? 0;
+    orderBySection.set(section.id, order + 1);
+
+    await prisma.question.create({
+      data: {
+        sectionId: section.id,
+        text: row.question_text,
+        type: row.type,
+        optionA: row.option_a || null,
+        optionB: row.option_b || null,
+        optionC: row.option_c || null,
+        optionD: row.option_d || null,
+        optionE: row.option_e || null,
+        correctAnswer: row.correct_answer,
+        points: row.points ?? 1,
+        order,
+        imageUrl: row.image_url || null,
+      },
+    });
+    added++;
+  }
+
+  console.log(`Тест "${title}": добавлено ${added} новых вопросов`);
+}
+
 async function createTestIfMissing({ title, description, sectionsData, questionBank }) {
   const existingTest = await prisma.test.findFirst({ where: { title } });
   if (existingTest) {
@@ -201,6 +278,16 @@ async function main() {
       { title: "Грамматика", timeLimitMinutes: 35, maxScore: 50 },
     ],
     rows: tsoomo4Rows,
+  });
+
+  const tochkaARows = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "data", "tochkaA.json"), "utf-8")
+  );
+  await createOrExtendTestFromRows({
+    title: "Точка А",
+    description: "Пробный тест «Точка А» (Математика)",
+    sectionsData: [{ title: "Математика", timeLimitMinutes: 90, maxScore: 63.75 }],
+    rows: tochkaARows,
   });
 }
 

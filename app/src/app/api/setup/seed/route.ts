@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 import tsoomo4Rows from "../../../../../prisma/data/tsoomo4.json";
+import tochkaARows from "../../../../../prisma/data/tochkaA.json";
 
 export const maxDuration = 60;
 
@@ -78,6 +79,88 @@ async function createTestFromRows(
   }
 
   await prisma.question.createMany({ data: questionsData });
+}
+
+async function createOrExtendTestFromRows(
+  title: string,
+  description: string,
+  sectionsData: SectionSeed[],
+  rows: ImportRow[]
+) {
+  let test = await prisma.test.findFirst({ where: { title } });
+  const sectionByTitle = new Map<string, { id: string; title: string }>();
+
+  if (!test) {
+    test = await prisma.test.create({ data: { title, description, isActive: true } });
+    for (let i = 0; i < sectionsData.length; i++) {
+      const s = sectionsData[i];
+      const section = await prisma.section.create({
+        data: { testId: test.id, title: s.title, order: i, timeLimitMinutes: s.timeLimitMinutes, maxScore: s.maxScore },
+      });
+      sectionByTitle.set(s.title, section);
+    }
+  } else {
+    const existingSections = await prisma.section.findMany({ where: { testId: test.id } });
+    for (const es of existingSections) sectionByTitle.set(es.title, es);
+    for (let i = 0; i < sectionsData.length; i++) {
+      const s = sectionsData[i];
+      const existing = sectionByTitle.get(s.title);
+      if (existing) {
+        const updated = await prisma.section.update({
+          where: { id: existing.id },
+          data: { timeLimitMinutes: s.timeLimitMinutes, maxScore: s.maxScore },
+        });
+        sectionByTitle.set(s.title, updated);
+      } else {
+        const section = await prisma.section.create({
+          data: {
+            testId: test.id,
+            title: s.title,
+            order: existingSections.length + i,
+            timeLimitMinutes: s.timeLimitMinutes,
+            maxScore: s.maxScore,
+          },
+        });
+        sectionByTitle.set(s.title, section);
+      }
+    }
+  }
+
+  const orderBySection = new Map<string, number>();
+  for (const section of sectionByTitle.values()) {
+    const count = await prisma.question.count({ where: { sectionId: section.id } });
+    orderBySection.set(section.id, count);
+  }
+
+  for (const row of rows) {
+    const section = sectionByTitle.get(row.section);
+    if (!section) continue;
+
+    const alreadyExists = await prisma.question.findFirst({
+      where: { sectionId: section.id, text: row.question_text },
+    });
+    if (alreadyExists) continue;
+
+    const order = orderBySection.get(section.id) ?? 0;
+    orderBySection.set(section.id, order + 1);
+
+    await prisma.question.create({
+      data: {
+        sectionId: section.id,
+        text: row.question_text,
+        type: row.type,
+        optionA: row.option_a || null,
+        optionB: row.option_b || null,
+        optionC: row.option_c || null,
+        optionD: row.option_d || null,
+        optionE: row.option_e || null,
+        correctAnswer: row.correct_answer,
+        points: row.points ?? 1,
+        order,
+        imageUrl: row.image_url || null,
+      },
+    });
+  }
 }
 
 async function createTestIfMissing(
@@ -231,6 +314,13 @@ export async function GET(request: Request) {
       { title: "Грамматика", timeLimitMinutes: 35, maxScore: 50 },
     ],
     tsoomo4Rows as ImportRow[]
+  );
+
+  await createOrExtendTestFromRows(
+    "Точка А",
+    "Пробный тест «Точка А» (Математика)",
+    [{ title: "Математика", timeLimitMinutes: 90, maxScore: 63.75 }],
+    tochkaARows as ImportRow[]
   );
 
   return htmlResponse(`
