@@ -50,10 +50,13 @@ export default function DashboardPage() {
   const [selectedStudent, setSelectedStudent] = useState<{ fio: string; email: string } | null>(null);
   const [studentStats, setStudentStats] = useState<StudentStats | null>(null);
   const [studentStatsLoading, setStudentStatsLoading] = useState(false);
+  const [role, setRole] = useState<"admin" | "curator" | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/groups").then((r) => r.json()).then(setGroups);
     fetch("/api/admin/tests").then((r) => r.json()).then((data) => setTests(data.map((t: { id: string; title: string }) => ({ id: t.id, title: t.title }))));
+    fetch("/api/admin/me").then((r) => r.json()).then((data) => setRole(data.role ?? null)).catch(() => {});
   }, []);
 
   async function openStudentStats(fio: string, email: string | null) {
@@ -65,6 +68,20 @@ export default function DashboardPage() {
     const data = await res.json();
     setStudentStats(res.ok ? data : { attempts: [], sectionAverages: [] });
     setStudentStatsLoading(false);
+  }
+
+  async function deleteAttempt(attemptId: string, studentFio: string) {
+    if (!confirm(`Удалить результат «${studentFio}»? Это действие необратимо.`)) return;
+    setDeletingId(attemptId);
+    try {
+      const res = await fetch(`/api/admin/attempts/${attemptId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setAttempts((prev) => prev?.filter((a) => a.id !== attemptId) ?? prev);
+    } catch {
+      alert("Не удалось удалить результат");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   const groupAverages = useMemo(() => {
@@ -264,13 +281,24 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-400">
                 {attempt.finishedAt ? new Date(attempt.finishedAt).toLocaleString("ru-RU") : "не завершено"}
               </p>
-              <button
-                onClick={() => openStudentStats(attempt.studentFio, attempt.studentEmail)}
-                disabled={!attempt.studentEmail}
-                className="text-xs font-medium text-emerald-600 hover:underline disabled:opacity-30"
-              >
-                График →
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => openStudentStats(attempt.studentFio, attempt.studentEmail)}
+                  disabled={!attempt.studentEmail}
+                  className="text-xs font-medium text-emerald-600 hover:underline disabled:opacity-30"
+                >
+                  График →
+                </button>
+                {role === "admin" && (
+                  <button
+                    onClick={() => deleteAttempt(attempt.id, attempt.studentFio)}
+                    disabled={deletingId === attempt.id}
+                    className="text-xs font-medium text-red-600 hover:underline disabled:opacity-30"
+                  >
+                    Удалить
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -312,13 +340,24 @@ export default function DashboardPage() {
                   {attempt.finishedAt ? new Date(attempt.finishedAt).toLocaleString("ru-RU") : "не завершено"}
                 </td>
                 <td className="px-4 py-3">
-                  <button
-                    onClick={() => openStudentStats(attempt.studentFio, attempt.studentEmail)}
-                    disabled={!attempt.studentEmail}
-                    className="text-xs font-medium text-emerald-600 hover:underline disabled:opacity-30"
-                  >
-                    График
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => openStudentStats(attempt.studentFio, attempt.studentEmail)}
+                      disabled={!attempt.studentEmail}
+                      className="text-xs font-medium text-emerald-600 hover:underline disabled:opacity-30"
+                    >
+                      График
+                    </button>
+                    {role === "admin" && (
+                      <button
+                        onClick={() => deleteAttempt(attempt.id, attempt.studentFio)}
+                        disabled={deletingId === attempt.id}
+                        className="text-xs font-medium text-red-600 hover:underline disabled:opacity-30"
+                      >
+                        Удалить
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
