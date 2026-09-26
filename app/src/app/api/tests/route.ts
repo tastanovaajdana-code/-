@@ -12,6 +12,7 @@ export async function GET() {
       id: test.id,
       title: test.title,
       description: test.description,
+      track: test.track,
       sectionsCount: test.sections.length,
     }))
   );

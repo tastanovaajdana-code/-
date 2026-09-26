@@ -15,6 +15,7 @@ export async function GET() {
       id: test.id,
       title: test.title,
       description: test.description,
+      track: test.track,
       isActive: test.isActive,
       sections: test.sections.map((s) => ({
         id: s.id,
@@ -35,9 +36,10 @@ export async function POST(request: Request) {
   const body = await request.json();
   const title = String(body.title ?? "").trim();
   const description = body.description ? String(body.description).trim() : null;
+  const track = body.track === "manas" ? "manas" : "ort";
 
   if (!title) return Response.json({ error: "Укажите название теста" }, { status: 400 });
 
-  const test = await prisma.test.create({ data: { title, description } });
+  const test = await prisma.test.create({ data: { title, description, track } });
   return Response.json({ id: test.id });
 }

@@ -7,6 +7,7 @@ type TestSummary = {
   id: string;
   title: string;
   description: string | null;
+  track: "ort" | "manas";
   sectionsCount: number;
 };
 
@@ -15,6 +16,7 @@ export default function TestsPage() {
   const [tests, setTests] = useState<TestSummary[] | null>(null);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState<string | null>(null);
+  const [tab, setTab] = useState<"all" | "ort" | "manas">("all");
 
   useEffect(() => {
     fetch("/api/tests")
@@ -48,22 +50,38 @@ export default function TestsPage() {
     return <p className="text-slate-500">Загрузка...</p>;
   }
 
+  const visible = tests.filter((t) => tab === "all" || t.track === tab);
+
   return (
     <div className="animate-fade-in-up">
-      <h1 className="text-2xl font-semibold text-slate-900">Выберите тест</h1>
-      <p className="mt-1 text-sm text-slate-500">Доступные тестирования для вашей группы</p>
+      <h1 className="text-2xl font-semibold text-slate-900">Пробные экзамены</h1>
+      <p className="mt-1 text-sm text-slate-500">Отдельные попытки и результаты для каждого экзамена</p>
       {error && (
         <p className="mt-2 rounded-lg bg-white px-3 py-2 text-sm text-red-600 shadow-sm ring-1 ring-slate-200">{error}</p>
       )}
 
-      {tests.length === 0 && (
+      <div className="mt-5 flex gap-2">
+        {(["all", "ort", "manas"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+              tab === t ? "bg-emerald-600 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200"
+            }`}
+          >
+            {t === "all" ? "Все" : t === "ort" ? "ОРТ" : "Манас"}
+          </button>
+        ))}
+      </div>
+
+      {visible.length === 0 && (
         <p className="mt-6 rounded-lg bg-white px-3 py-2 text-slate-500 shadow-sm ring-1 ring-slate-200">
           Нет доступных тестов. Обратитесь к администратору.
         </p>
       )}
 
       <div className="mt-6 flex flex-col gap-4">
-        {tests.map((test) => (
+        {visible.map((test) => (
           <button
             key={test.id}
             onClick={() => startTest(test.id)}
@@ -80,7 +98,12 @@ export default function TestsPage() {
               </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-medium text-slate-900">{test.title}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-medium text-slate-900">{test.title}</h2>
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  {test.track === "manas" ? "Манас" : "ОРТ"}
+                </span>
+              </div>
               {test.description && (
                 <p className="mt-1 text-sm text-slate-500">{test.description}</p>
               )}

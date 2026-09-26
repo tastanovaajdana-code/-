@@ -8,6 +8,7 @@ type Test = {
   id: string;
   title: string;
   description: string | null;
+  track: "ort" | "manas";
   isActive: boolean;
   sections: { id: string; title: string; questionCount: number }[];
 };
@@ -17,6 +18,7 @@ export default function AdminTestsPage() {
   const [tests, setTests] = useState<Test[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [track, setTrack] = useState<"ort" | "manas">("ort");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function AdminTestsPage() {
     const res = await fetch("/api/admin/tests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: title.trim(), description: description.trim() }),
+      body: JSON.stringify({ title: title.trim(), description: description.trim(), track }),
     });
     if (!res.ok) {
       const data = await res.json();
@@ -49,6 +51,7 @@ export default function AdminTestsPage() {
     }
     setTitle("");
     setDescription("");
+    setTrack("ort");
     load();
   }
 
@@ -109,6 +112,14 @@ export default function AdminTestsPage() {
           placeholder="Описание (необязательно)"
           className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
         />
+        <select
+          value={track}
+          onChange={(e) => setTrack(e.target.value as "ort" | "manas")}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+        >
+          <option value="ort">ОРТ</option>
+          <option value="manas">Манас</option>
+        </select>
         <button className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition hover:bg-emerald-700">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -139,9 +150,14 @@ export default function AdminTestsPage() {
                 </svg>
               </Link>
               <div className="min-w-0 flex-1">
-                <Link href={`/admin/tests/${test.id}`} className="font-medium text-slate-900 hover:text-emerald-600">
-                  {test.title}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link href={`/admin/tests/${test.id}`} className="font-medium text-slate-900 hover:text-emerald-600">
+                    {test.title}
+                  </Link>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                    {test.track === "manas" ? "Манас" : "ОРТ"}
+                  </span>
+                </div>
                 <p className="text-xs text-slate-400">
                   {test.sections.length} раздел(ов) · {questionCount} вопросов
                 </p>
