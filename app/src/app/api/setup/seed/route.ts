@@ -245,6 +245,15 @@ export async function GET(request: Request) {
     await prisma.group.upsert({ where: { name }, update: {}, create: { name } });
   }
 
+  const ortSubjects = ["Математика", "Аналогии", "Чтение и понимание текста", "Грамотность письма"];
+  const manasSubjects = ["Математика", "Физика", "Химия", "Биология", "История", "География", "Кыргыз тили", "Англис тили"];
+  for (const [i, name] of ortSubjects.entries()) {
+    await prisma.subject.upsert({ where: { track_name: { track: "ort", name } }, update: {}, create: { track: "ort", name, order: i } });
+  }
+  for (const [i, name] of manasSubjects.entries()) {
+    await prisma.subject.upsert({ where: { track_name: { track: "manas", name } }, update: {}, create: { track: "manas", name, order: i } });
+  }
+
   const sectionsData: SectionSeed[] = [
     { title: "Аналогии", timeLimitMinutes: 20, maxScore: 25 },
     { title: "Математика", timeLimitMinutes: 30, maxScore: 25 },

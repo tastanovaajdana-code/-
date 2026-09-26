@@ -7,11 +7,14 @@ import { LogoMark } from "@/components/BrandScene";
 
 const links = [
   { href: "/day", label: "Мой день" },
-  { href: "/videos", label: "Видеоуроки" },
-  { href: "/tests", label: "Тесты" },
+  { href: "/ort", label: "Подготовка к ОРТ" },
+  { href: "/manas", label: "Подготовка к Манасу" },
   { href: "/homework", label: "Домашние задания" },
+  { href: "/tests", label: "Пробные экзамены" },
+  { href: "/mistakes", label: "Работа над ошибками" },
+  { href: "/goal", label: "Мои цели" },
   { href: "/stats", label: "Моя статистика" },
-  { href: "/goal", label: "Моя цель" },
+  { href: "/curator", label: "Куратор" },
 ];
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {

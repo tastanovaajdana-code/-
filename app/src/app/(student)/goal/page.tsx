@@ -15,9 +15,10 @@ export default function GoalPage() {
 
     fetch(`/api/student/goal?email=${encodeURIComponent(email)}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => {
-        setTargetPercent(data.targetPercent);
-        if (data.targetPercent) setInput(String(data.targetPercent));
+      .then((data: { subjectId: string | null; targetPercent: number }[]) => {
+        const overall = data.find((g) => g.subjectId === null);
+        setTargetPercent(overall?.targetPercent ?? null);
+        if (overall?.targetPercent) setInput(String(overall.targetPercent));
       })
       .catch(() => setError("Не удалось загрузить цель"));
   }, []);

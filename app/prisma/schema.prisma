@@ -13,26 +13,31 @@ model AdminUser {
   login        String   @unique
   passwordHash String
   role         String   @default("admin") // "admin" | "curator"
+  displayName  String?
+  contact      String?
   createdAt    DateTime @default(now())
+  curatedGroups Group[] @relation("GroupCurator")
 }
 
 model Group {
-  id        String     @id @default(cuid())
-  name      String     @unique
-  createdAt DateTime   @default(now())
-  attempts  Attempt[]
-  homeworks Homework[]
+  id         String     @id @default(cuid())
+  name       String     @unique
+  createdAt  DateTime   @default(now())
+  curatorId  String?
+  curator    AdminUser? @relation("GroupCurator", fields: [curatorId], references: [id], onDelete: SetNull)
+  attempts   Attempt[]
 }
 
 model Test {
   id          String     @id @default(cuid())
   title       String
   description String?
+  track       String     @default("ort") // "ort" | "manas"
   isActive    Boolean    @default(true)
   createdAt   DateTime   @default(now())
   sections    Section[]
   attempts    Attempt[]
-  homeworks   Homework[]
+  lessons     Lesson[]
 }
 
 model Section {
@@ -114,57 +119,54 @@ model AttemptSectionResult {
 
 model StudentGoal {
   id            String   @id @default(cuid())
-  email         String   @unique
+  email         String
+  subjectId     String?
+  subject       Subject? @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   targetPercent Int
   updatedAt     DateTime @updatedAt
 }
 
-model VideoLesson {
-  id              String       @id @default(cuid())
+model Subject {
+  id        String    @id @default(cuid())
+  track     String    // "ort" | "manas"
+  name      String
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+  lessons   Lesson[]
+  goals     StudentGoal[]
+
+  @@unique([track, name])
+}
+
+model Lesson {
+  id              String            @id @default(cuid())
+  subjectId       String
+  subject         Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   title           String
-  url             String       @db.Text
-  description     String?      @db.Text
-  subject         String?
+  videoUrl        String?           @db.Text
+  description     String?           @db.Text
   durationMinutes Int?
-  order           Int          @default(0)
-  isActive        Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  watches         VideoWatch[]
+  practiceType    String            @default("none") // "none" | "test" | "text"
+  practiceTestId  String?
+  practiceTest    Test?             @relation(fields: [practiceTestId], references: [id], onDelete: SetNull)
+  practiceText    String?           @db.Text
+  dueDate         DateTime?
+  order           Int               @default(0)
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  progress        LessonProgress[]
 }
 
-model VideoWatch {
-  id            String      @id @default(cuid())
-  videoLessonId String
-  videoLesson   VideoLesson @relation(fields: [videoLessonId], references: [id], onDelete: Cascade)
-  studentEmail  String
-  watchedAt     DateTime    @default(now())
-
-  @@unique([videoLessonId, studentEmail])
-}
-
-model Homework {
-  id          String               @id @default(cuid())
-  title       String
-  type        String               // "test" | "text"
-  groupId     String
-  group       Group                @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  testId      String?
-  test        Test?                @relation(fields: [testId], references: [id], onDelete: SetNull)
-  textBody    String?              @db.Text
-  dueDate     DateTime?
-  order       Int                  @default(0)
-  createdAt   DateTime             @default(now())
-  completions HomeworkCompletion[]
-}
-
-model HomeworkCompletion {
-  id           String   @id @default(cuid())
-  homeworkId   String
-  homework     Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+model LessonProgress {
+  id           String    @id @default(cuid())
+  lessonId     String
+  lesson       Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   studentEmail String
-  completedAt  DateTime @default(now())
+  watchedAt    DateTime?
+  practiceDone Boolean   @default(false)
+  updatedAt    DateTime  @updatedAt
 
-  @@unique([homeworkId, studentEmail])
+  @@unique([lessonId, studentEmail])
 }
 
 model Answer {

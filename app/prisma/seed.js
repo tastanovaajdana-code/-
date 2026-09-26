@@ -203,6 +203,15 @@ async function main() {
     await prisma.group.upsert({ where: { name }, update: {}, create: { name } });
   }
 
+  const ortSubjects = ["Математика", "Аналогии", "Чтение и понимание текста", "Грамотность письма"];
+  const manasSubjects = ["Математика", "Физика", "Химия", "Биология", "История", "География", "Кыргыз тили", "Англис тили"];
+  for (const [i, name] of ortSubjects.entries()) {
+    await prisma.subject.upsert({ where: { track_name: { track: "ort", name } }, update: {}, create: { track: "ort", name, order: i } });
+  }
+  for (const [i, name] of manasSubjects.entries()) {
+    await prisma.subject.upsert({ where: { track_name: { track: "manas", name } }, update: {}, create: { track: "manas", name, order: i } });
+  }
+
   await createTestIfMissing({
     title: "ОРТ — пробный тест №1",
     description: "Тренировочное тестирование по 4 разделам ОРТ",
