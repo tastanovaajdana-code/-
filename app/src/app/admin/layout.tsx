@@ -33,6 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       ? [
           { href: "/admin/tests", label: "Тесты" },
           { href: "/admin/videos", label: "Видеоуроки" },
+          { href: "/admin/homework", label: "Домашние задания" },
           { href: "/admin/groups", label: "Группы" },
           { href: "/admin/admins", label: "Пользователи" },
         ]

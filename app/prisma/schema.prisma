@@ -17,20 +17,22 @@ model AdminUser {
 }
 
 model Group {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  createdAt DateTime  @default(now())
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
   attempts  Attempt[]
+  homeworks Homework[]
 }
 
 model Test {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   description String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
   sections    Section[]
   attempts    Attempt[]
+  homeworks   Homework[]
 }
 
 model Section {
@@ -138,6 +140,31 @@ model VideoWatch {
   watchedAt     DateTime    @default(now())
 
   @@unique([videoLessonId, studentEmail])
+}
+
+model Homework {
+  id          String               @id @default(cuid())
+  title       String
+  type        String               // "test" | "text"
+  groupId     String
+  group       Group                @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  testId      String?
+  test        Test?                @relation(fields: [testId], references: [id], onDelete: SetNull)
+  textBody    String?              @db.Text
+  dueDate     DateTime?
+  order       Int                  @default(0)
+  createdAt   DateTime             @default(now())
+  completions HomeworkCompletion[]
+}
+
+model HomeworkCompletion {
+  id           String   @id @default(cuid())
+  homeworkId   String
+  homework     Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  studentEmail String
+  completedAt  DateTime @default(now())
+
+  @@unique([homeworkId, studentEmail])
 }
 
 model Answer {
