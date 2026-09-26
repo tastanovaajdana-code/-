@@ -35,10 +35,12 @@ export async function computeStudentStats(email: string) {
         const result = resultMap.get(section.id);
         const max = section.maxScore ?? section.questions.reduce((qs, q) => qs + q.points, 0);
         return {
+          sectionId: section.id,
           title: section.title,
           score: result?.score ?? 0,
           maxScore: Math.round(max * 100) / 100,
           percent: max > 0 ? Math.round(((result?.score ?? 0) / max) * 1000) / 10 : 0,
+          finished: Boolean(result?.finishedAt),
         };
       }),
     };

@@ -22,7 +22,7 @@ type AttemptStat = {
   totalScore: number;
   maxScore: number;
   percent: number;
-  sections: { title: string; score: number; maxScore: number; percent: number }[];
+  sections: { sectionId: string; title: string; score: number; maxScore: number; percent: number; finished: boolean }[];
 };
 
 type StatsData = {
@@ -35,6 +35,7 @@ export default function StatsPage() {
   const [fio, setFio] = useState("");
   const [data, setData] = useState<StatsData | null>(null);
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedFio = sessionStorage.getItem("ort_student_fio");
@@ -115,19 +116,67 @@ export default function StatsPage() {
               {data.attempts
                 .slice()
                 .reverse()
-                .map((a) => (
-                  <div key={a.attemptId} className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-slate-900">{a.testTitle}</span>
-                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
-                        {a.totalScore} / {a.maxScore} ({a.percent}%)
-                      </span>
+                .map((a) => {
+                  const isOpen = expandedId === a.attemptId;
+                  return (
+                    <div key={a.attemptId} className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+                      <button
+                        onClick={() => setExpandedId(isOpen ? null : a.attemptId)}
+                        className="flex w-full items-center justify-between p-4 text-left"
+                      >
+                        <div>
+                          <span className="font-medium text-slate-900">{a.testTitle}</span>
+                          <p className="mt-1 text-xs text-slate-400">
+                            {new Date(a.finishedAt).toLocaleDateString("ru-RU")}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700">
+                            {a.totalScore} / {a.maxScore} ({a.percent}%)
+                          </span>
+                          <svg
+                            className={`h-4 w-4 flex-none text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </button>
+
+                      {isOpen && (
+                        <div className="flex flex-col gap-2 border-t border-slate-100 p-4 pt-3">
+                          {a.sections.map((s) => (
+                            <button
+                              key={s.sectionId}
+                              disabled={!s.finished}
+                              onClick={() => router.push(`/attempt/${a.attemptId}/section/${s.sectionId}/review`)}
+                              className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
+                                s.finished
+                                  ? "cursor-pointer bg-slate-50 hover:bg-emerald-50"
+                                  : "cursor-default bg-slate-50 opacity-60"
+                              }`}
+                            >
+                              <span className="text-slate-700">{s.title}</span>
+                              <span className="flex items-center gap-2">
+                                <span className="font-medium text-slate-600">
+                                  {s.finished ? `${s.score} / ${s.maxScore} (${s.percent}%)` : "не завершено"}
+                                </span>
+                                {s.finished && (
+                                  <svg className="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                  </svg>
+                                )}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <p className="mt-1 text-xs text-slate-400">
-                      {new Date(a.finishedAt).toLocaleDateString("ru-RU")}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </>
         )}
