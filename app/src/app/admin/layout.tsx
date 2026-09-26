@@ -32,6 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     ...(role === "admin"
       ? [
           { href: "/admin/tests", label: "Тесты" },
+          { href: "/admin/videos", label: "Видеоуроки" },
           { href: "/admin/groups", label: "Группы" },
           { href: "/admin/admins", label: "Пользователи" },
         ]

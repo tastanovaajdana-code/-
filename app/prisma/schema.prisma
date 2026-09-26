@@ -117,6 +117,29 @@ model StudentGoal {
   updatedAt     DateTime @updatedAt
 }
 
+model VideoLesson {
+  id              String       @id @default(cuid())
+  title           String
+  url             String       @db.Text
+  description     String?      @db.Text
+  subject         String?
+  durationMinutes Int?
+  order           Int          @default(0)
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  watches         VideoWatch[]
+}
+
+model VideoWatch {
+  id            String      @id @default(cuid())
+  videoLessonId String
+  videoLesson   VideoLesson @relation(fields: [videoLessonId], references: [id], onDelete: Cascade)
+  studentEmail  String
+  watchedAt     DateTime    @default(now())
+
+  @@unique([videoLessonId, studentEmail])
+}
+
 model Answer {
   id                     String                @id @default(cuid())
   sectionResultId        String
