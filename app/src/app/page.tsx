@@ -33,7 +33,7 @@ export default function StartPage() {
     sessionStorage.setItem("ort_student_fio", fio.trim());
     sessionStorage.setItem("ort_student_email", trimmedEmail.toLowerCase());
     sessionStorage.setItem("ort_student_group", group.trim());
-    router.push("/tests");
+    router.push("/day");
   }
 
   return (
