@@ -38,6 +38,7 @@ export async function GET(
   return Response.json({
     studentFio: attempt.studentFio,
     group: attempt.group.name,
+    testId: attempt.testId,
     testTitle: attempt.test.title,
     totalScore: attempt.totalScore,
     finished: Boolean(attempt.finishedAt),

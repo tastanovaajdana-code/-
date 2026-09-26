@@ -1,23 +1,17 @@
 import { prisma } from "@/lib/prisma";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { getStudentSession } from "@/lib/studentAuth";
 
 export async function POST(request: Request) {
+  const session = await getStudentSession();
+  if (!session) return Response.json({ error: "Войдите в аккаунт" }, { status: 401 });
+
   const body = await request.json();
-  const fio = String(body.fio ?? "").trim();
-  const email = String(body.email ?? "").trim().toLowerCase();
-  const groupName = String(body.group ?? "").trim();
   const testId = String(body.testId ?? "").trim();
+  if (!testId) return Response.json({ error: "Не указан тест" }, { status: 400 });
 
-  if (!fio || !email || !groupName || !testId) {
-    return Response.json(
-      { error: "Укажите ФИО, электронную почту и группу" },
-      { status: 400 }
-    );
-  }
-
-  if (!EMAIL_RE.test(email)) {
-    return Response.json({ error: "Некорректный формат электронной почты" }, { status: 400 });
+  const student = await prisma.student.findUnique({ where: { id: session.studentId } });
+  if (!student || !student.groupId) {
+    return Response.json({ error: "Аккаунт не найден или не привязан к группе" }, { status: 400 });
   }
 
   const test = await prisma.test.findUnique({ where: { id: testId } });
@@ -26,38 +20,32 @@ export async function POST(request: Request) {
   }
 
   const existing = await prisma.attempt.findUnique({
-    where: { testId_studentEmail: { testId, studentEmail: email } },
+    where: { testId_studentEmail: { testId, studentEmail: student.email } },
   });
 
   if (existing) {
     if (existing.finishedAt) {
       return Response.json(
-        { error: "Вы уже проходили этот тест с указанной электронной почтой. Повторная сдача невозможна." },
+        { error: "Вы уже проходили этот тест. Повторная сдача невозможна." },
         { status: 409 }
       );
     }
     return Response.json({ attemptId: existing.id });
   }
 
-  const group = await prisma.group.upsert({
-    where: { name: groupName },
-    update: {},
-    create: { name: groupName },
-  });
-
   try {
     const attempt = await prisma.attempt.create({
       data: {
-        studentFio: fio,
-        studentEmail: email,
-        groupId: group.id,
+        studentFio: student.fio,
+        studentEmail: student.email,
+        groupId: student.groupId,
         testId: test.id,
       },
     });
     return Response.json({ attemptId: attempt.id });
   } catch {
     const race = await prisma.attempt.findUnique({
-      where: { testId_studentEmail: { testId, studentEmail: email } },
+      where: { testId_studentEmail: { testId, studentEmail: student.email } },
     });
     if (race) return Response.json({ attemptId: race.id });
     return Response.json({ error: "Не удалось начать тест, попробуйте ещё раз" }, { status: 500 });

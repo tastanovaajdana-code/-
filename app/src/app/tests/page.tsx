@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { StudentNav } from "@/components/StudentNav";
 
 type TestSummary = {
   id: string;
@@ -12,18 +13,16 @@ type TestSummary = {
 
 export default function TestsPage() {
   const router = useRouter();
+  const [fio, setFio] = useState("");
   const [tests, setTests] = useState<TestSummary[] | null>(null);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState<string | null>(null);
 
   useEffect(() => {
-    const fio = sessionStorage.getItem("ort_student_fio");
-    const email = sessionStorage.getItem("ort_student_email");
-    const group = sessionStorage.getItem("ort_student_group");
-    if (!fio || !email || !group) {
-      router.replace("/");
-      return;
-    }
+    fetch("/api/student/me")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setFio(data.fio))
+      .catch(() => router.replace("/"));
 
     fetch("/api/tests")
       .then((res) => res.json())
@@ -35,13 +34,10 @@ export default function TestsPage() {
     setStarting(testId);
     setError("");
     try {
-      const fio = sessionStorage.getItem("ort_student_fio");
-      const email = sessionStorage.getItem("ort_student_email");
-      const group = sessionStorage.getItem("ort_student_group");
       const res = await fetch("/api/attempts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fio, email, group, testId }),
+        body: JSON.stringify({ testId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Ошибка");
@@ -58,6 +54,7 @@ export default function TestsPage() {
 
   return (
     <main className="flex flex-1 flex-col items-center px-4 py-12">
+      <StudentNav fio={fio} />
       <div className="w-full max-w-2xl animate-fade-in-up">
         <h1 className="text-2xl font-semibold text-white">Выберите тест</h1>
         <p className="mt-1 text-sm text-emerald-50/80">Доступные тестирования для вашей группы</p>

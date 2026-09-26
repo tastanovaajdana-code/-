@@ -15,6 +15,7 @@ type SectionResult = {
 type ResultsData = {
   studentFio: string;
   group: string;
+  testId: string;
   testTitle: string;
   totalScore: number;
   finished: boolean;
@@ -172,6 +173,22 @@ export default function ResultsPage() {
           <span className="text-lg font-medium">Итоговый балл</span>
           <span className="text-3xl font-bold">{data.totalScore}</span>
         </div>
+
+        {data.finished && (
+          <button
+            onClick={() => router.push(`/tests/${data.testId}/rating`)}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <svg className="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12M15.5 8.5a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z"
+              />
+            </svg>
+            Посмотреть рейтинг по этому тесту
+          </button>
+        )}
       </div>
     </main>
   );

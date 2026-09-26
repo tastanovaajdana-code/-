@@ -21,6 +21,17 @@ model Group {
   name      String    @unique
   createdAt DateTime  @default(now())
   attempts  Attempt[]
+  students  Student[]
+}
+
+model Student {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fio          String
+  groupId      String?
+  group        Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
 }
 
 model Test {

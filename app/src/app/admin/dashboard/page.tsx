@@ -1,9 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
 
 type Group = { id: string; name: string };
 type Test = { id: string; title: string };
+
+type StudentAttemptStat = {
+  attemptId: string;
+  testTitle: string;
+  finishedAt: string;
+  totalScore: number;
+  maxScore: number;
+  percent: number;
+};
+type StudentStats = {
+  attempts: StudentAttemptStat[];
+  sectionAverages: { title: string; averagePercent: number }[];
+};
 
 type AttemptRow = {
   id: string;
@@ -23,11 +47,41 @@ export default function DashboardPage() {
   const [groupId, setGroupId] = useState("");
   const [testId, setTestId] = useState("");
   const [attempts, setAttempts] = useState<AttemptRow[] | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<{ fio: string; email: string } | null>(null);
+  const [studentStats, setStudentStats] = useState<StudentStats | null>(null);
+  const [studentStatsLoading, setStudentStatsLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/groups").then((r) => r.json()).then(setGroups);
     fetch("/api/admin/tests").then((r) => r.json()).then((data) => setTests(data.map((t: { id: string; title: string }) => ({ id: t.id, title: t.title }))));
   }, []);
+
+  async function openStudentStats(fio: string, email: string | null) {
+    if (!email) return;
+    setSelectedStudent({ fio, email });
+    setStudentStats(null);
+    setStudentStatsLoading(true);
+    const res = await fetch(`/api/admin/students/stats?email=${encodeURIComponent(email)}`);
+    const data = await res.json();
+    setStudentStats(res.ok ? data : { attempts: [], sectionAverages: [] });
+    setStudentStatsLoading(false);
+  }
+
+  const groupAverages = useMemo(() => {
+    if (!attempts) return [];
+    const sums = new Map<string, { sum: number; count: number }>();
+    for (const a of attempts) {
+      if (!a.finishedAt) continue;
+      const entry = sums.get(a.groupName) ?? { sum: 0, count: 0 };
+      entry.sum += a.totalScore;
+      entry.count += 1;
+      sums.set(a.groupName, entry);
+    }
+    return Array.from(sums.entries()).map(([name, { sum, count }]) => ({
+      name,
+      Балл: Math.round((sum / count) * 10) / 10,
+    }));
+  }, [attempts]);
 
   useEffect(() => {
     const query = new URLSearchParams();
@@ -143,6 +197,23 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {groupAverages.length > 1 && (
+        <div className="mt-6 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+          <div className="text-sm font-medium text-slate-900">Средний балл по группам</div>
+          <div className="mt-3" style={{ width: "100%", height: 200 }}>
+            <ResponsiveContainer>
+              <BarChart data={groupAverages}>
+                <CartesianGrid stroke="#E4DFD0" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#65697E" }} axisLine={{ stroke: "#E4DFD0" }} />
+                <YAxis tick={{ fontSize: 12, fill: "#65697E" }} axisLine={{ stroke: "#E4DFD0" }} />
+                <Tooltip />
+                <Bar dataKey="Балл" fill="#059669" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 flex flex-wrap gap-3">
         <select
           value={groupId}
@@ -189,9 +260,18 @@ export default function DashboardPage() {
             <p className="mt-1 text-xs text-slate-600">
               {attempt.sections.map((s) => `${s.title}: ${s.finished ? s.score : "—"}`).join(" · ")}
             </p>
-            <p className="mt-2 text-xs text-slate-400">
-              {attempt.finishedAt ? new Date(attempt.finishedAt).toLocaleString("ru-RU") : "не завершено"}
-            </p>
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-xs text-slate-400">
+                {attempt.finishedAt ? new Date(attempt.finishedAt).toLocaleString("ru-RU") : "не завершено"}
+              </p>
+              <button
+                onClick={() => openStudentStats(attempt.studentFio, attempt.studentEmail)}
+                disabled={!attempt.studentEmail}
+                className="text-xs font-medium text-emerald-600 hover:underline disabled:opacity-30"
+              >
+                График →
+              </button>
+            </div>
           </div>
         ))}
         {attempts?.length === 0 && (
@@ -212,6 +292,7 @@ export default function DashboardPage() {
               <th className="px-4 py-3 font-medium">Разделы</th>
               <th className="px-4 py-3 font-medium">Итог</th>
               <th className="px-4 py-3 font-medium">Дата</th>
+              <th className="px-4 py-3 font-medium"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -230,11 +311,20 @@ export default function DashboardPage() {
                 <td className="px-4 py-3 text-slate-500">
                   {attempt.finishedAt ? new Date(attempt.finishedAt).toLocaleString("ru-RU") : "не завершено"}
                 </td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => openStudentStats(attempt.studentFio, attempt.studentEmail)}
+                    disabled={!attempt.studentEmail}
+                    className="text-xs font-medium text-emerald-600 hover:underline disabled:opacity-30"
+                  >
+                    График
+                  </button>
+                </td>
               </tr>
             ))}
             {attempts?.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                   Нет данных
                 </td>
               </tr>
@@ -242,6 +332,92 @@ export default function DashboardPage() {
           </tbody>
         </table>
       </div>
+
+      {selectedStudent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+          onClick={() => setSelectedStudent(null)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">{selectedStudent.fio}</h2>
+                <p className="text-sm text-slate-500">{selectedStudent.email}</p>
+              </div>
+              <button
+                onClick={() => setSelectedStudent(null)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {studentStatsLoading && <p className="mt-6 text-sm text-slate-400">Загрузка...</p>}
+
+            {studentStats && !studentStatsLoading && (
+              studentStats.attempts.length === 0 ? (
+                <p className="mt-6 text-sm text-slate-400">Нет завершённых попыток</p>
+              ) : (
+                <>
+                  <div className="mt-5">
+                    <div className="text-sm font-medium text-slate-900">Прогресс по попыткам (%)</div>
+                    <div className="mt-2" style={{ width: "100%", height: 180 }}>
+                      <ResponsiveContainer>
+                        <LineChart
+                          data={studentStats.attempts.map((a) => ({
+                            name: new Date(a.finishedAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" }),
+                            Балл: a.percent,
+                          }))}
+                        >
+                          <CartesianGrid stroke="#E4DFD0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#65697E" }} axisLine={{ stroke: "#E4DFD0" }} />
+                          <YAxis tick={{ fontSize: 11, fill: "#65697E" }} axisLine={{ stroke: "#E4DFD0" }} domain={[0, 100]} />
+                          <Tooltip />
+                          <Line type="monotone" dataKey="Балл" stroke="#059669" strokeWidth={3} dot={{ r: 4, fill: "#CE9A3E" }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <div className="text-sm font-medium text-slate-900">Средний результат по разделам (%)</div>
+                    <div className="mt-2" style={{ width: "100%", height: 180 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={studentStats.sectionAverages.map((s) => ({ name: s.title, Балл: s.averagePercent }))}>
+                          <CartesianGrid stroke="#E4DFD0" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#65697E" }} axisLine={{ stroke: "#E4DFD0" }} />
+                          <YAxis tick={{ fontSize: 11, fill: "#65697E" }} axisLine={{ stroke: "#E4DFD0" }} domain={[0, 100]} />
+                          <Tooltip />
+                          <Bar dataKey="Балл" fill="#CE9A3E" radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-col gap-2">
+                    {studentStats.attempts
+                      .slice()
+                      .reverse()
+                      .map((a) => (
+                        <div key={a.attemptId} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                          <span className="text-slate-700">{a.testTitle}</span>
+                          <span className="font-medium text-emerald-700">
+                            {a.totalScore} / {a.maxScore} ({a.percent}%)
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
