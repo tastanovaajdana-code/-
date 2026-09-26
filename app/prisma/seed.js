@@ -109,7 +109,19 @@ async function main() {
   });
   console.log(`Админ создан: логин "${adminLogin}", пароль "${adminPassword}"`);
 
-  const groupNames = ["Прогресс", "Грант", "ЖРТ"];
+  const groupNames = [
+    "Прогресс",
+    "Грант",
+    "ЖРТ",
+    "Progress-1",
+    "Progress-2",
+    "Grant-1",
+    "Grant-2",
+    "Vip-1",
+    "Standart-1",
+    "Стандарт-2",
+    "ЖРТ-1",
+  ];
   for (const name of groupNames) {
     await prisma.group.upsert({ where: { name }, update: {}, create: { name } });
   }
